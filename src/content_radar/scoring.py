@@ -13,7 +13,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from content_radar.models import Item, normalize_title
+from content_radar.models import Item, normalize_title, source_key
 from content_radar.timeutil import now_local
 
 # Hours until the recency signal halves, by item kind. Papers and vulns age slower.
@@ -142,7 +142,7 @@ class Cluster:
 
     @property
     def source_families(self) -> set[str]:
-        return {i.source.split(":")[0] for i in self.items}
+        return {source_key(i.source) for i in self.items}
 
     @property
     def cross_source_count(self) -> int:

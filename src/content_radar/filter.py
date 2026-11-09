@@ -16,6 +16,7 @@ from content_radar.llm import (
     check_budget,
     count_input_tokens,
     load_prompt,
+    parse_or_none,
 )
 from content_radar.models import Item
 
@@ -108,15 +109,18 @@ def filter_items(
 
     verdicts: dict[int, FilterVerdict] = {}
     for batch, payload in zip(batches, payloads, strict=True):
-        response = client.messages.parse(
+        response = parse_or_none(
+            client,
+            "filter",
+            tracker,
             model=model,
-            max_tokens=settings.budget.estimates.filter_output_per_item * len(batch) + 500,
+            # verdicts run ~60-80 tokens each; leave generous headroom so JSON is never cut
+            max_tokens=settings.budget.estimates.filter_output_per_item * len(batch) * 2 + 1000,
             system=system,
             messages=[{"role": "user", "content": payload}],
             output_format=FilterBatch,
             output_config={"effort": settings.llm.filter_effort},
         )
-        tracker.record("filter", model, response.usage)
         if response.stop_reason == "refusal":
             log.warning("filter batch refused; keeping its %d items unfiltered", len(batch))
             continue

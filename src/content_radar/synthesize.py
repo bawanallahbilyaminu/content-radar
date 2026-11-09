@@ -16,6 +16,7 @@ from content_radar.llm import (
     check_budget,
     count_input_tokens,
     load_prompt,
+    parse_or_none,
 )
 from content_radar.models import Idea, canonical_url
 from content_radar.scoring import Cluster
@@ -128,7 +129,10 @@ def synthesize(
     messages = [{"role": "user", "content": user}]
     ideas: list[Idea] = []
     for attempt in range(2):
-        response = client.messages.parse(
+        response = parse_or_none(
+            client,
+            "synthesize",
+            tracker,
             model=model,
             max_tokens=16000,
             system=system,
@@ -136,7 +140,6 @@ def synthesize(
             output_format=IdeaBatch,
             output_config={"effort": settings.llm.synthesize_effort},
         )
-        tracker.record("synthesize", model, response.usage)
         if response.stop_reason == "refusal":
             log.warning("synthesis refused by the model; no ideas this run")
             return []

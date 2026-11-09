@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from datetime import datetime, timedelta
 
 from content_radar.config import NicheConfig
-from content_radar.models import Item, normalize_title
+from content_radar.models import Item, normalize_title, source_key
 from content_radar.timeutil import now_local
 
 log = logging.getLogger(__name__)
@@ -146,7 +146,7 @@ def _merge_duplicate(keep: Item, dup: Item) -> None:
     for key, value in dup.engagement.items():
         keep.engagement[key] = max(keep.engagement.get(key, 0.0), value)
     sources = keep.engagement.setdefault("cross_source_count", 1.0)
-    if dup.source.split(":")[0] != keep.source.split(":")[0]:
+    if source_key(dup.source) != source_key(keep.source):
         keep.engagement["cross_source_count"] = sources + 1
     for tag in dup.niche_tags:
         if tag not in keep.niche_tags:

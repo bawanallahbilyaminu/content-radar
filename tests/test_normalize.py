@@ -53,7 +53,7 @@ def test_dedupe_by_url_and_title_merges_engagement():
     kept = out[0]
     assert kept.engagement["points"] == 50
     assert kept.engagement["comments"] == 3
-    assert kept.engagement["cross_source_count"] == 3  # hn + verge + techcrunch
+    assert kept.engagement["cross_source_count"] == 3  # hn + verge + techcrunch (feeds differ)
 
 
 def test_dedupe_keeps_distinct():

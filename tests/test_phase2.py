@@ -182,6 +182,20 @@ def test_filter_applies_verdict_tags_and_fails_open_on_missing_ids(settings):
     assert out[2].verdict is None  # kept, fail-open
 
 
+def test_filter_fails_open_when_output_is_truncated(settings):
+    items = [_item("a"), _item("b")]
+    client = _fake([])
+
+    def broken_parse(**kw):
+        FilterBatch.model_validate_json('{"verdicts": [{"id": 0, "ke')  # raises
+
+    client.messages.parse = broken_parse
+    tracker = UsageTracker(settings)
+    out = filter_items(items, settings, client, tracker)  # must not raise
+    assert len(out) == 2 and all(f.verdict is None for f in out)
+    assert tracker.calls_for("filter") == 1  # still accounted for
+
+
 def test_filter_skips_everything_when_budget_too_small(settings):
     settings.budget.max_cost_usd_per_run = 0.0001
     client = _fake([])

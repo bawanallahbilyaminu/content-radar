@@ -5,9 +5,11 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Protocol
 
 import anthropic
+from pydantic import ValidationError
 
 from content_radar.config import Settings
 
@@ -122,6 +124,34 @@ def count_input_tokens(client: ModelClient, model: str, system: str, user: str) 
 
 class BudgetExceeded(Exception):
     pass
+
+
+def parse_or_none(client: ModelClient, step: str, tracker: UsageTracker, **kwargs: Any) -> Any:
+    """Call messages.parse(). Usage is always recorded. If the model output was cut off
+    (max_tokens) or did not match the schema, return a response whose parsed_output is
+    None instead of raising, so callers can fail open or retry."""
+    try:
+        response = client.messages.parse(**kwargs)
+    except ValidationError as exc:
+        # The SDK raises when the text is not valid JSON for the schema; usage is lost
+        # with it, so account for the request at the max_tokens cap to stay conservative.
+        est_in = int(getattr(exc, "input_tokens", 0) or 0)
+        tracker.record(
+            step,
+            kwargs.get("model", "?"),
+            SimpleNamespace(input_tokens=est_in, output_tokens=int(kwargs.get("max_tokens", 0))),
+        )
+        log.warning("%s: model output did not parse (%s)", step, str(exc).splitlines()[0][:120])
+        return SimpleNamespace(parsed_output=None, stop_reason="parse_error", content=[])
+    tracker.record(step, kwargs.get("model", "?"), response.usage)
+    if response.stop_reason == "max_tokens":
+        log.warning(
+            "%s: output hit max_tokens=%s; treating as unparsable", step, kwargs.get("max_tokens")
+        )
+        return SimpleNamespace(
+            parsed_output=None, stop_reason="max_tokens", content=response.content
+        )
+    return response
 
 
 def check_budget(

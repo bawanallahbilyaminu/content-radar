@@ -49,6 +49,16 @@ def canonical_url(url: str) -> str:
     return urlunsplit((parts.scheme.lower() or "https", host, path, urlencode(query), ""))
 
 
+_PLATFORM_FAMILIES = {"reddit", "stackexchange"}
+
+
+def source_key(source: str) -> str:
+    """Identity used for cross-source counting. Different RSS feeds are different
+    outlets; subreddits and Stack Exchange sites collapse to their platform."""
+    family = source.split(":")[0]
+    return family if family in _PLATFORM_FAMILIES else source
+
+
 def normalize_title(title: str) -> str:
     """Lower-case, strip punctuation and collapse whitespace for dedupe."""
     return _WORD_RE.sub(" ", title.lower()).strip()

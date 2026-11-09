@@ -27,7 +27,7 @@ budget:
     claude-haiku-5-5: {input: 0.10, output: 0.50}
     claude-sonnet-5-5: {input: 2.00, output: 10.00}
   estimates:
-    filter_output_per_item: 45
+    filter_output_per_item: 80
     synthesize_output_tokens: 7000
     synthesize_input_reserve: 14000
 

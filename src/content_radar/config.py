@@ -45,7 +45,7 @@ class ModelPricing(BaseModel):
 
 
 class BudgetEstimates(BaseModel):
-    filter_output_per_item: int = 45
+    filter_output_per_item: int = 80
     synthesize_output_tokens: int = 7000
     synthesize_input_reserve: int = 14000
 
