@@ -11,7 +11,7 @@ import pytest
 from content_radar.config import DEFAULT_CONFIG_PATH, load_settings
 from content_radar.models import Idea, Item
 from content_radar.scoring import rank_clusters
-from content_radar.sinks.notion import PROPERTIES, NotionSink, idea_to_properties, row_key
+from content_radar.sinks.notion import PROPERTIES, NotionSink, idea_to_properties, row_urls
 from content_radar.synthesize import Context, IdeaDraft, ScoreBreakdown, SourceCitation, enforce
 from content_radar.timeutil import now_local
 
@@ -203,6 +203,47 @@ def test_score_breakdown_is_clamped(settings):
     assert idea.score == 25 + 0 + 0 + 15 + 15
 
 
+# --- evergreen demand floor -----------------------------------------------------
+
+
+def test_evergreen_tutorial_with_demand_gets_timeliness_floor(settings):
+    q = _item(
+        "How do I sandbox interview code?",
+        source="stackexchange:security",
+        url="https://security.stackexchange.com/q/1",
+        kind="question",
+        hours_old=160,
+    )
+    news = _item("New CVE", url="https://a.com/cve", hours_old=3)
+    ctx = _ctx([q, news], settings)
+    bd = ScoreBreakdown(timeliness=10, demand=14, local_angle=0, cross_source=5, effort=8)
+    floored, _ = enforce(
+        _draft(
+            ["https://security.stackexchange.com/q/1"],
+            format="tutorial",
+            evergreen=True,
+            score_breakdown=bd,
+        ),
+        ctx,
+        settings,
+    )
+    assert floored.score_breakdown["timeliness"] == settings.run.evergreen_timeliness_floor
+    # not evergreen -> no floor; evergreen news -> no floor; evergreen but no demand -> no floor
+    for kw in ({"format": "tutorial", "evergreen": False}, {"format": "news", "evergreen": True}):
+        idea, _ = enforce(
+            _draft(["https://security.stackexchange.com/q/1"], score_breakdown=bd, **kw),
+            ctx,
+            settings,
+        )
+        assert idea.score_breakdown["timeliness"] == 10
+    no_demand, _ = enforce(
+        _draft(["https://a.com/cve"], format="explainer", evergreen=True, score_breakdown=bd),
+        ctx,
+        settings,
+    )
+    assert no_demand.score_breakdown["timeliness"] == 10
+
+
 # --- Notion sink ----------------------------------------------------------------
 
 
@@ -233,11 +274,12 @@ class FakeNotion:
         return {"id": f"page_{len(self.created)}"}
 
 
-def _row(title, url):
+def _row(title, url, sources_text=""):
     return {
         "properties": {
             "Title": {"type": "title", "title": [{"plain_text": title}]},
             "Primary Source": {"type": "url", "url": url},
+            "Sources": {"type": "rich_text", "rich_text": [{"plain_text": sources_text}]},
         }
     }
 
@@ -261,11 +303,23 @@ def _idea(title, url, **kw) -> Idea:
 
 
 def test_notion_sink_creates_only_new_rows_with_status_new():
-    fake = FakeNotion([_row("Existing Idea", "https://a.com/1"), _row("Other", "https://a.com/2")])
+    fake = FakeNotion(
+        [
+            _row("Existing Idea", "https://a.com/1"),
+            _row(
+                "Other", "https://a.com/2", "https://a.com/2 — note\nhttps://a.com/secondary — more"
+            ),
+        ]
+    )
     sink = NotionSink(fake, "db_1")
     created = sink.write(
         [
-            _idea("existing idea!", "https://www.a.com/1?utm_source=x"),  # dup by normalized key
+            _idea("A totally different title", "https://www.a.com/1?utm_source=x"),  # same URL
+            _idea(
+                "Reuses a secondary URL",
+                "https://a.com/new",
+                sources=["https://a.com/new", "https://a.com/secondary/"],
+            ),
             _idea(
                 "Brand New",
                 "https://a.com/3",
@@ -293,9 +347,22 @@ def test_notion_sink_creates_only_new_rows_with_status_new():
     assert props["Score Breakdown"]["rich_text"][0]["text"]["content"] == ""
 
 
-def test_row_key_matches_idea_dedupe_key():
-    idea = _idea("Hello World", "https://www.a.com/x/?ref=hn")
-    assert row_key("hello world", "https://a.com/x") == idea.dedupe_key()
+def test_dedupe_key_is_primary_url_only():
+    a = _idea("Hello World", "https://www.a.com/x/?ref=hn")
+    b = _idea("Completely different title", "https://a.com/x")
+    assert a.dedupe_key() == b.dedupe_key() == "https://a.com/x"
+
+
+def test_row_urls_collects_primary_angle_and_sources():
+    props = {
+        "Primary Source": {"type": "url", "url": "https://www.a.com/p/"},
+        "Angle Source": {"type": "url", "url": "https://techcabal.com/q?utm_source=x"},
+        "Sources": {
+            "type": "rich_text",
+            "rich_text": [{"plain_text": "https://a.com/p — one\nhttps://b.com/r — two"}],
+        },
+    }
+    assert row_urls(props) == {"https://a.com/p", "https://techcabal.com/q", "https://b.com/r"}
 
 
 def test_idea_to_properties_truncates_long_text():

@@ -11,6 +11,8 @@ run:
   assumed_angle_max_points: 12  # specific, plausible angle with no local item behind it
   generic_angle_max_points: 3   # "many Nigerians use X" style angles
   max_other_ideas: 1            # niche=other ideas per run (they also earn 0 local points)
+  evergreen_timeliness_floor: 18  # evergreen tutorial/explainer with live demand: timeliness
+                                  # means 'useful now', not 'how recent', so floor it here
 
 models:
   filter: claude-haiku-5-5        # cheap per-item tagging / filtering, batched

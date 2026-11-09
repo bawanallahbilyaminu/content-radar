@@ -13,7 +13,7 @@ import logging
 from collections.abc import Iterable
 from typing import Any, Protocol
 
-from content_radar.models import Idea, canonical_url, normalize_title
+from content_radar.models import Idea, canonical_url
 from content_radar.timeutil import today_local
 
 log = logging.getLogger(__name__)
@@ -115,8 +115,19 @@ def _plain(prop: dict[str, Any]) -> str:
     return ""
 
 
-def row_key(title: str, primary_url: str) -> str:
-    return f"{normalize_title(title)}|{canonical_url(primary_url) if primary_url else ''}"
+def row_urls(props: dict[str, Any]) -> set[str]:
+    """Every canonical URL a row already uses: Primary Source, Angle Source and the
+    Sources text (one "url — note" line per source)."""
+    urls: set[str] = set()
+    for key in ("Primary Source", "Angle Source"):
+        value = _plain(props.get(key, {}))
+        if value:
+            urls.add(canonical_url(value))
+    for line in _plain(props.get("Sources", {})).splitlines():
+        token = line.strip().split(" ")[0]
+        if token.startswith("http"):
+            urls.add(canonical_url(token))
+    return urls
 
 
 class NotionSink:
@@ -157,35 +168,36 @@ class NotionSink:
                 return
             cursor = page.get("next_cursor")
 
-    def existing_keys(self) -> set[str]:
-        keys: set[str] = set()
+    def existing_urls(self) -> set[str]:
+        """Canonical URLs already cited by any row in the database."""
+        used: set[str] = set()
         for row in self.iter_rows():
-            props = row.get("properties", {})
-            title = _plain(props.get("Title", {}))
-            primary = _plain(props.get("Primary Source", {}))
-            if not primary:
-                # Fall back to the first URL in the Sources text.
-                primary = _plain(props.get("Sources", {})).split()[0:1] or [""]
-                primary = primary[0]
-            keys.add(row_key(title, primary))
-        return keys
+            used |= row_urls(row.get("properties", {}))
+        return used
 
     def write(self, ideas: list[Idea]) -> list[Idea]:
         """Create a page for every idea not already present. Returns the ideas created."""
         self.ensure_schema()
-        existing = self.existing_keys()
+        used = self.existing_urls()
         found_on = today_local()
         created: list[Idea] = []
         for idea in ideas:
-            key = row_key(idea.title, str(idea.sources[0]))
-            if key in existing:
-                log.info("notion: skip duplicate '%s'", idea.title[:60])
+            cited = {canonical_url(str(u)) for u in idea.sources}
+            if idea.angle_source:
+                cited.add(canonical_url(str(idea.angle_source)))
+            overlap = cited & used
+            if overlap:
+                log.info(
+                    "notion: skip '%s': %d cited URL(s) already used by an existing row",
+                    idea.title[:60],
+                    len(overlap),
+                )
                 continue
             self.client.pages.create(
                 parent={"type": "data_source_id", "data_source_id": self.data_source_id},
                 properties=idea_to_properties(idea, found_on),
             )
-            existing.add(key)
+            used |= cited
             created.append(idea)
             log.info("notion: created '%s' (score %d)", idea.title[:60], idea.score)
         log.info(

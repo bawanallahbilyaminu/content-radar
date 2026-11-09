@@ -1,54 +1,59 @@
 {
-  "_comment": "Hand-labelled calibration set from the 2026-11-09 runs. Breakdowns are realistic model outputs; the test asserts that code-side rules rank every 'good' idea above every 'weak' one.",
+  "_comment": "Hand-labelled calibration set. Breakdowns for the 'good' ideas are the real Sonnet outputs logged on 2026-11-09 (run 3). The two 'weak' breakdowns are reconstructed to match the scores those rows received in run 1 (69 and 61), before breakdown logging existed. The test asserts the code-side rules rank every good idea above every weak one and that good ideas clear the minimum score.",
   "items": [
-    {"url": "https://security.stackexchange.com/questions/287418/running-untrusted-source-code", "source": "stackexchange:security", "kind": "question", "title": "Running untrusted source code (e.g. for a job interview)", "hours_old": 60, "engagement": {"score": 3, "views": 100, "answers": 1}},
+    {"url": "https://security.stackexchange.com/questions/287418/running-untrusted-source-code", "source": "stackexchange:security", "kind": "question", "title": "Running untrusted source code (e.g. for a job interview)", "hours_old": 160, "engagement": {"score": 3, "views": 100, "answers": 1}},
     {"url": "https://techcabal.com/2026/11/09/milsats-role-in-digital-address-system/", "source": "rss:techcabal", "kind": "trend", "title": "This tech firm built the geospatial infrastructure behind Nigeria's door-level address system", "hours_old": 5, "niche_tags": ["local", "data"]},
-    {"url": "https://github.com/synchopate/llama-modchip", "source": "hackernews", "kind": "trend", "title": "Llama-modchip: 284B DeepSeek on 64GB RAM, no GPU", "hours_old": 8, "engagement": {"points": 462, "comments": 200}},
+    {"url": "https://github.com/synchopate/llama-modchip", "source": "hackernews", "kind": "trend", "title": "Llama-modchip: 284B DeepSeek on 64GB RAM, no GPU", "hours_old": 8, "engagement": {"points": 463, "comments": 201}},
     {"url": "https://techeconomy.ng/how-your-smartphone-settings-influence-mobile-data-consumption", "source": "rss:techeconomy", "kind": "trend", "title": "How Your Smartphone Settings Influence Mobile Data Consumption", "hours_old": 6, "niche_tags": ["local"]},
     {"url": "https://techeconomy.ng/how-nigerian-freelancers-can-stop-losing-10-to-cross-border-payment-fees", "source": "rss:techeconomy", "kind": "trend", "title": "How Nigerian Freelancers Can Stop Losing 10% to Cross-Border Payment Fees", "hours_old": 7, "niche_tags": ["local"]}
   ],
   "good": [
     {
-      "title": "How to Safely Run Code From a Job Interview",
-      "niche": "cyber", "format": "tutorial", "length": "long", "effort": "med",
-      "angle": "Nigerian developers often take remote coding tests from unknown recruiters, and fake-interview malware targets exactly that.",
+      "_logged": "run 3: score 48 = T10 D14 L11(assumed) X5 E8; dropped below 55 before the evergreen rule",
+      "title": "Never run a recruiter's code test on your own laptop",
+      "niche": "cyber", "format": "tutorial", "length": "long", "effort": "med", "evergreen": true,
+      "angle": "Nigerian developers take remote coding tests from unknown recruiters, and fake-interview malware targets exactly that.",
       "angle_evidence": "assumed", "angle_source": null,
       "sources": [{"url": "https://security.stackexchange.com/questions/287418/running-untrusted-source-code", "supports": "the question asking exactly this, with an answer"}],
-      "score_breakdown": {"timeliness": 12, "demand": 18, "local_angle": 14, "cross_source": 5, "effort": 10}
+      "score_breakdown": {"timeliness": 10, "demand": 14, "local_angle": 11, "cross_source": 5, "effort": 8}
     },
     {
-      "title": "Nigeria's Digital Postcode: Who Built It and Can the Data Stay Accurate?",
-      "niche": "data", "format": "explainer", "length": "long", "effort": "med",
-      "angle": "TechCabal reports Milsat built the geospatial infrastructure behind Nigeria's door-level address system.",
+      "_logged": "run 3: score 62 = T20 D5 L18(sourced) X5 E14",
+      "title": "Nigeria's new digital postcode: how the location data works",
+      "niche": "data", "format": "explainer", "length": "short", "effort": "low", "evergreen": false,
+      "angle": "Nigeria's door-level address system and the geospatial data behind it, as covered by TechCabal.",
       "angle_evidence": "sourced", "angle_source": "https://techcabal.com/2026/11/09/milsats-role-in-digital-address-system/",
-      "sources": [{"url": "https://techcabal.com/2026/11/09/milsats-role-in-digital-address-system/", "supports": "Milsat's role building the address data infrastructure"}],
-      "score_breakdown": {"timeliness": 20, "demand": 8, "local_angle": 18, "cross_source": 5, "effort": 8}
+      "sources": [{"url": "https://techcabal.com/2026/11/09/milsats-role-in-digital-address-system/", "supports": "Milsat building the geospatial infrastructure behind the postcode system"}],
+      "score_breakdown": {"timeliness": 20, "demand": 5, "local_angle": 18, "cross_source": 5, "effort": 14}
     },
     {
-      "title": "Run a 284B DeepSeek Model on 64GB RAM With No GPU",
-      "niche": "ai_ml", "format": "news", "length": "short", "effort": "low",
-      "angle": "Most Nigerian developers and students cannot afford a GPU, so RAM-only inference is a realistic budget path.",
+      "_logged": "run 3: score 56 = T18 D15 L4(assumed) X5 E14",
+      "title": "Run a 284B DeepSeek on 64GB RAM with no GPU?",
+      "niche": "ai_ml", "format": "news", "length": "short", "effort": "low", "evergreen": false,
+      "angle": "Running big models on ordinary RAM matters for people without expensive GPUs.",
       "angle_evidence": "assumed", "angle_source": null,
-      "sources": [{"url": "https://github.com/synchopate/llama-modchip", "supports": "the repo and the 462-point HN thread"}],
-      "score_breakdown": {"timeliness": 22, "demand": 20, "local_angle": 10, "cross_source": 5, "effort": 13}
+      "sources": [{"url": "https://github.com/synchopate/llama-modchip", "supports": "the llama-modchip project running 284B DeepSeek on 64GB RAM"}],
+      "score_breakdown": {"timeliness": 18, "demand": 15, "local_angle": 4, "cross_source": 5, "effort": 14}
     }
   ],
   "weak": [
     {
+      "_logged": "run 1: score 61 (breakdown reconstructed; L20 because the angle was sourced)",
       "title": "Save Data on Your Phone: Settings That Cut Your Mobile Data Use",
-      "niche": "other", "format": "tutorial", "length": "short", "effort": "low",
+      "niche": "other", "format": "tutorial", "length": "short", "effort": "low", "evergreen": true,
       "angle": "Nigerians on expensive, limited data plans benefit most from data-saving phone settings, as covered by Techeconomy.",
       "angle_evidence": "sourced", "angle_source": "https://techeconomy.ng/how-your-smartphone-settings-influence-mobile-data-consumption",
       "sources": [{"url": "https://techeconomy.ng/how-your-smartphone-settings-influence-mobile-data-consumption", "supports": "how phone settings influence data consumption"}],
       "score_breakdown": {"timeliness": 15, "demand": 6, "local_angle": 20, "cross_source": 5, "effort": 15}
     },
     {
+      "_logged": "run 1: score 69 (breakdown reconstructed; L20 because the angle was sourced)",
       "title": "Stop Losing 10% of Your Dollar Income: Cross-Border Payment Fees Explained",
-      "niche": "other", "format": "explainer", "length": "short", "effort": "low",
+      "niche": "other", "format": "explainer", "length": "short", "effort": "low", "evergreen": true,
       "angle": "Nigerian freelancers paid in foreign currency lose money at each step of the payment chain, as reported by Techeconomy.",
       "angle_evidence": "sourced", "angle_source": "https://techeconomy.ng/how-nigerian-freelancers-can-stop-losing-10-to-cross-border-payment-fees",
       "sources": [{"url": "https://techeconomy.ng/how-nigerian-freelancers-can-stop-losing-10-to-cross-border-payment-fees", "supports": "the chain of fees that takes up to 10%"}],
-      "score_breakdown": {"timeliness": 18, "demand": 8, "local_angle": 20, "cross_source": 5, "effort": 15}
+      "score_breakdown": {"timeliness": 20, "demand": 9, "local_angle": 20, "cross_source": 5, "effort": 15}
     }
   ]
 }

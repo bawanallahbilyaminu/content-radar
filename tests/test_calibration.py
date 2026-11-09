@@ -48,13 +48,14 @@ def _items(spec):
 
 
 def _draft(spec) -> IdeaDraft:
+    fields = {k: v for k, v in spec.items() if not k.startswith("_")}
+    fields.setdefault("evergreen", False)
     return IdeaDraft(
         hook="Hook.",
         why_now="now",
         demand_signal="signal",
-        evergreen=False,
         breaking=False,
-        **spec,
+        **fields,
     )
 
 

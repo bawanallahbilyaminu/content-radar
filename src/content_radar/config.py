@@ -27,6 +27,7 @@ class RunConfig(BaseModel):
     assumed_angle_max_points: int = 12
     generic_angle_max_points: int = 3
     max_other_ideas: int = 1
+    evergreen_timeliness_floor: int = 18
 
 
 class ModelsConfig(BaseModel):

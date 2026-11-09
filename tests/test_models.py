@@ -64,7 +64,7 @@ def _idea(**overrides):
 def test_idea_valid():
     idea = _idea()
     assert idea.primary_source == "https://example.com/gpt5"
-    assert idea.dedupe_key().startswith("does gpt 5 speak hausa|")
+    assert idea.dedupe_key() == "https://example.com/gpt5"  # primary URL only
 
 
 def test_idea_requires_source():

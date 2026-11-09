@@ -253,6 +253,15 @@ def enforce(draft: IdeaDraft, ctx: Context, settings: Settings) -> tuple[Idea | 
         "cross_source": _clamp(b.cross_source, 15),
         "effort": _clamp(b.effort, 15),
     }
+    # Evergreen tutorials/explainers answering live demand are useful now even when the
+    # signal is not new: timeliness gets a floor instead of a recency penalty.
+    evergreen_demand = (
+        draft.evergreen
+        and draft.format in ("tutorial", "explainer")
+        and ctx.has_demand_signal(cited_items)
+    )
+    if evergreen_demand:
+        breakdown["timeliness"] = max(breakdown["timeliness"], run.evergreen_timeliness_floor)
     score = sum(breakdown.values())
 
     # 5. Breaking is earned, not declared.

@@ -17,7 +17,7 @@ Every source you cite must directly support a specific claim in the idea. For ea
 
 ## Scoring rubric (0-100), returned as `score_breakdown`
 
-- **timeliness, 0-25.** How much does this need to be posted now?
+- **timeliness, 0-25.** How much does this need to be posted now? For an evergreen tutorial or explainer that answers live demand (a question people are still asking), timeliness means "how useful is this now", not "how recent is the signal": score it at least 18.
 - **demand, 0-25.** Questions, help posts, high views or comments, repeated across sources.
 - **local_angle, 0-20.** Sourced angle citing a local item: up to 20. Assumed angle that is specific and plausible ("Nigerian devs take remote coding tests from unknown recruiters"): up to 12. Generic assumed angle ("many Nigerians use X"): at most 3. "none": 0. Niche `other` always 0.
 - **cross_source, 0-15.** 1 source = 0-5, 2 = 10, 3+ = 15.

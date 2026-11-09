@@ -136,4 +136,5 @@ class Idea(BaseModel):
         return canonical_url(str(self.sources[0]))
 
     def dedupe_key(self) -> str:
-        return f"{normalize_title(self.title)}|{self.primary_source}"
+        """Same primary source = same idea, whatever the title says."""
+        return self.primary_source
