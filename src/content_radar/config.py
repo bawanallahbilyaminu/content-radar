@@ -30,6 +30,37 @@ class ModelsConfig(BaseModel):
     filter_batch_size: int = 50
 
 
+class LlmConfig(BaseModel):
+    filter_top_items: int = 120
+    synthesize_top_clusters: int = 25
+    filter_effort: str = "low"
+    synthesize_effort: str = "medium"
+
+
+class ModelPricing(BaseModel):
+    """USD per 1M tokens."""
+
+    input: float
+    output: float
+
+
+class BudgetEstimates(BaseModel):
+    filter_output_per_item: int = 45
+    synthesize_output_tokens: int = 7000
+    synthesize_input_reserve: int = 14000
+
+
+class BudgetConfig(BaseModel):
+    max_cost_usd_per_run: float = 0.25
+    pricing: dict[str, ModelPricing] = Field(
+        default_factory=lambda: {
+            "claude-haiku-5-5": ModelPricing(input=0.10, output=0.50),
+            "claude-sonnet-5-5": ModelPricing(input=2.00, output=10.00),
+        }
+    )
+    estimates: BudgetEstimates = Field(default_factory=BudgetEstimates)
+
+
 class NicheConfig(BaseModel):
     keywords: list[str] = Field(default_factory=list)
     local_keywords: list[str] = Field(default_factory=list)
@@ -83,6 +114,8 @@ class Secrets(BaseModel):
 class Settings(BaseModel):
     run: RunConfig = Field(default_factory=RunConfig)
     models: ModelsConfig = Field(default_factory=ModelsConfig)
+    llm: LlmConfig = Field(default_factory=LlmConfig)
+    budget: BudgetConfig = Field(default_factory=BudgetConfig)
     niche: NicheConfig = Field(default_factory=NicheConfig)
     sources: dict[str, SourceConfig] = Field(default_factory=dict)
     secrets: Secrets = Field(default_factory=Secrets)

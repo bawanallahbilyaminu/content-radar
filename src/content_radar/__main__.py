@@ -28,6 +28,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--sources", default=None, help="comma-separated subset, e.g. hackernews,rss"
     )
     run_p.add_argument("--no-sink", action="store_true", help="skip writing to Notion")
+    run_p.add_argument(
+        "--skip-llm", action="store_true", help="stop after collection; no Claude calls"
+    )
     run_p.add_argument("--limit", type=int, default=None, help="print at most N items (dry run)")
     run_p.add_argument(
         "--items", action="store_true", help="in dry run, print collected items instead of ideas"
@@ -50,8 +53,18 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "run":
         sources = [s.strip() for s in args.sources.split(",")] if args.sources else None
-        result = run(settings, sources=sources, dry_run=args.dry_run, sink=not args.no_sink)
+        result = run(
+            settings,
+            sources=sources,
+            dry_run=args.dry_run,
+            sink=not args.no_sink,
+            skip_llm=args.skip_llm,
+        )
         print(result.summary(), file=sys.stderr)
+        if result.llm_summary:
+            print(result.llm_summary, file=sys.stderr)
+        if result.skipped_reason:
+            print(f"SKIPPED: {result.skipped_reason}", file=sys.stderr)
         if args.dry_run:
             show_items = args.items or not result.ideas
             records = result.items if show_items else result.ideas

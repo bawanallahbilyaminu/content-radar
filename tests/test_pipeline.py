@@ -54,7 +54,7 @@ def test_collect_items_respects_sources_filter(settings, transport):
 def test_cli_dry_run_prints_json(settings, transport, monkeypatch, capsys):
     monkeypatch.setattr(cli, "load_settings", lambda _p: settings)
     monkeypatch.setattr(cli, "run", lambda s, **kw: pipeline_run(s, transport=transport, **kw))
-    rc = cli.main(["run", "--dry-run", "--sources", "arxiv", "--limit", "2"])
+    rc = cli.main(["run", "--dry-run", "--skip-llm", "--sources", "arxiv", "--limit", "2"])
     assert rc == 0
     out = capsys.readouterr().out
     data = json.loads(out)

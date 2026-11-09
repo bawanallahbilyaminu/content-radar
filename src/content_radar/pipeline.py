@@ -11,8 +11,12 @@ import httpx
 from content_radar.collectors import REGISTRY
 from content_radar.collectors.base import client_from_settings, safe_collect
 from content_radar.config import Settings
+from content_radar.filter import FilterVerdict, filter_items
+from content_radar.llm import BudgetExceeded, ModelClient, UsageTracker, make_client
 from content_radar.models import Idea, Item
 from content_radar.normalize import Tagger, dedupe, within_lookback
+from content_radar.scoring import item_score, rank_clusters
+from content_radar.synthesize import synthesize
 
 log = logging.getLogger(__name__)
 
@@ -25,6 +29,8 @@ class RunResult:
     per_source_kept: Counter[str] = field(default_factory=Counter)
     dropped_stale: int = 0
     dropped_duplicate: int = 0
+    llm_summary: str = ""
+    skipped_reason: str = ""
 
     def summary(self) -> str:
         lines = ["source            raw  kept"]
@@ -85,14 +91,54 @@ def run(
     sources: list[str] | None = None,
     dry_run: bool = False,
     sink: bool = True,
+    skip_llm: bool = False,
     transport: httpx.BaseTransport | None = None,
+    client: ModelClient | None = None,
 ) -> RunResult:
-    """Full daily run. Phases 2 and 3 plug scoring, synthesis and the Notion sink in here."""
+    """Full daily run: collect -> score -> filter -> synthesize (-> sink in Phase 3).
+    --dry-run still runs the LLM steps (that is what we want to judge) but writes nothing."""
     result = collect_items(settings, sources=sources, transport=transport)
-    if dry_run:
-        log.info("dry run: skipping synthesis and sink")
+    if skip_llm:
+        log.info("--skip-llm: stopping after collection")
         return result
-    # Phase 2: score + synthesize -> result.ideas
+    if client is None and not settings.secrets.anthropic_api_key:
+        result.skipped_reason = "ANTHROPIC_API_KEY not set; skipped filter and synthesis"
+        log.warning(result.skipped_reason)
+        return result
+    result.ideas = generate_ideas(result.items, settings, client or make_client(settings), result)
+    if dry_run:
+        log.info("dry run: nothing written")
+        return result
     # Phase 3: if sink: write result.ideas to Notion
     _ = sink
     return result
+
+
+def generate_ideas(
+    items: list[Item], settings: Settings, client: ModelClient, result: RunResult
+) -> list[Idea]:
+    """Score -> batched Haiku filter -> re-rank -> Sonnet synthesis, under the cost guard."""
+    tracker = UsageTracker(settings)
+    ideas: list[Idea] = []
+    try:
+        ranked = sorted(items, key=item_score, reverse=True)
+        candidates = ranked[: settings.llm.filter_top_items]
+        reserve = (
+            settings.budget.estimates.synthesize_input_reserve,
+            settings.budget.estimates.synthesize_output_tokens,
+        )
+        filtered = filter_items(candidates, settings, client, tracker, synth_reserve=reserve)
+        notes: dict[str, FilterVerdict] = {
+            str(f.item.url): f.verdict for f in filtered if f.verdict is not None
+        }
+        clusters = rank_clusters([f.item for f in filtered])
+        log.info("%d items survived the filter -> %d clusters", len(filtered), len(clusters))
+        ideas = synthesize(
+            clusters[: settings.llm.synthesize_top_clusters], notes, settings, client, tracker
+        )
+    except BudgetExceeded as exc:
+        result.skipped_reason = str(exc)
+        log.warning("cost guard: %s", exc)
+    result.llm_summary = tracker.summary()
+    log.info(result.llm_summary)
+    return ideas

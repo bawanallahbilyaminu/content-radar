@@ -12,6 +12,25 @@ models:
   synthesize: claude-sonnet-5-5   # final idea synthesis
   filter_batch_size: 50
 
+llm:
+  filter_top_items: 120          # best pre-scored items sent to the Haiku filter
+  synthesize_top_clusters: 25    # best clusters sent to Sonnet
+  filter_effort: low
+  synthesize_effort: medium
+
+budget:
+  # Cost guard: if the projected run cost exceeds this, LLM steps are skipped and the
+  # reason is logged. Estimates use the free count_tokens endpoint for input and the
+  # figures below for output.
+  max_cost_usd_per_run: 0.25
+  pricing:                       # USD per 1M tokens (Anthropic first-party, 2026-11)
+    claude-haiku-5-5: {input: 0.10, output: 0.50}
+    claude-sonnet-5-5: {input: 2.00, output: 10.00}
+  estimates:
+    filter_output_per_item: 45
+    synthesize_output_tokens: 7000
+    synthesize_input_reserve: 14000
+
 niche:
   # Used by keyword-driven collectors (HN, GitHub) and for niche_tags.
   keywords:
