@@ -163,6 +163,7 @@ sources:
     enabled: true
     limit: 40
     created_within_days: 7
+    lookback_hours: 168       # repos created this week, not just the last 48h
     min_stars: 30
     min_forks: 3              # star-farmed spam repos have hundreds of stars and zero forks
     topics:

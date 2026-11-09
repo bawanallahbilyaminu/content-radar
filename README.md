@@ -6,10 +6,10 @@ uses Claude to turn the strongest ones into **ranked video ideas with a
 Nigerian / African angle**. Ideas land in a Notion database that serves as a
 post-idea backlog.
 
-**Status:** Phases 1 and 2 complete: collect, normalize, dedupe, deterministic
-scoring, a batched Haiku filter and Sonnet synthesis into ranked `Idea` objects,
-all under a per-run cost guard. The Notion sink and the daily schedule come
-next. See `docs/PLAN.md` for the plan and `CLAUDE.md` for the project brief.
+**Status:** Phases 1 to 3 complete: collect, normalize, dedupe, deterministic
+scoring, a batched Haiku filter, Sonnet synthesis into ranked `Idea` objects under
+a per-run cost guard, and a create-only Notion sink. The daily schedule (Phase 4)
+comes next. See `docs/PLAN.md` for the plan and `CLAUDE.md` for the project brief.
 
 ## Setup (dev, Windows or Linux)
 
@@ -99,6 +99,42 @@ Before any paid call the pipeline counts input tokens with the free
 `budget.pricing`, and skips the LLM steps with a logged reason if the projection
 exceeds the cap. Actual tokens and cost per call are logged; a typical run costs
 about $0.05.
+
+### Idea rules enforced in code
+
+The model proposes, code decides. After synthesis every idea is checked:
+
+- **Sources** must be URLs from the collected items and each carries a one-phrase
+  justification (`source_notes`). Unknown or unjustified URLs are dropped.
+- **Breaking** is kept only if a cited item was published in the last 48 hours *and*
+  the topic appeared on 2+ sources, is a CISA KEV entry, or is a Hacker News thread
+  with 300+ points.
+- **Angle evidence** is `sourced` only when `angle_source` is a collected local item
+  (TechCabal, NDPC, NITDA, Techeconomy, Benjamin Dada, r/Nigeria, or anything tagged
+  local). Otherwise it is `assumed`, and the local-angle rubric points are capped at
+  6. `angle: none` earns 0.
+- **Score** is recomputed from the model's rubric breakdown, and ideas under
+  `run.min_idea_score` (default 55) are dropped. Fewer than 7 ideas is fine.
+
+## Notion
+
+One-time setup: create an internal integration at notion.so/profile/integrations,
+put its token in `NOTION_TOKEN`, share a parent page with the integration, put the
+page ID in `NOTION_PARENT_PAGE_ID`, then run:
+
+```bash
+uv run python scripts/create_notion_db.py --write-env
+```
+
+This creates the Ideas database with every property (Title, Hook, Angle, Angle
+Evidence, Angle Source, Format, Length, Niche, Why Now, Demand Signal, Sources,
+Primary Source, Score, Effort, Evergreen, Breaking, Status, Date Found) and writes
+`NOTION_IDEAS_DB_ID` into `.env`.
+
+The sink only ever **creates** rows, always with `Status = New`. It dedupes against
+existing rows by normalized title plus primary source URL and never edits or deletes
+a row, so anything a human changes stays changed. `--no-sink` skips it; `--dry-run`
+never writes.
 
 ## Time zone
 

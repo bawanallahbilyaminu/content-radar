@@ -105,7 +105,12 @@ local angles can be judged.
 
 ---
 
-## Phase 3 — Notion sink
+## Phase 3 — Notion sink ✅
+
+Done 2026-11-09 with notion-client 3.x (API 2025-09-03: database -> data source ->
+pages). Extra properties beyond the brief: Angle Evidence, Angle Source, Primary
+Source (used for dedupe). Same day: breaking, angle-evidence, source-justification
+and minimum-score rules moved from prompt-only to code enforcement.
 
 Goal: ideas land in the Notion database as `Status = New` rows, no duplicates.
 
