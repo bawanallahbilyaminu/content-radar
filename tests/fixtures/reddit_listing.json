@@ -1,0 +1,57 @@
+{
+ "kind": "Listing",
+ "data": {
+  "after": "t3_zzz",
+  "children": [
+   {
+    "kind": "t3",
+    "data": {
+     "title": "How do I fine-tune a 7B model on a single 16GB GPU?",
+     "url": "https://www.reddit.com/r/LocalLLaMA/comments/abc123/how_do_i_finetune/",
+     "permalink": "/r/LocalLLaMA/comments/abc123/how_do_i_finetune/",
+     "score": 212,
+     "num_comments": 87,
+     "created_utc": 1794200000.0,
+     "link_flair_text": "Question | Help",
+     "subreddit": "LocalLLaMA",
+     "is_self": true,
+     "author": "should_not_be_stored",
+     "selftext": "Body text that must not be stored either."
+    }
+   },
+   {
+    "kind": "t3",
+    "data": {
+     "title": "DeepSeek releases V4 weights under MIT license",
+     "url": "https://github.com/deepseek-ai/DeepSeek-V4",
+     "permalink": "/r/LocalLLaMA/comments/def456/deepseek_v4/",
+     "score": 1540,
+     "num_comments": 302,
+     "created_utc": 1794210000.0,
+     "link_flair_text": "News",
+     "subreddit": "LocalLLaMA",
+     "is_self": false,
+     "author": "someone_else",
+     "selftext": ""
+    }
+   },
+   {
+    "kind": "t3",
+    "data": {
+     "title": "Weekly discussion thread",
+     "url": "https://www.reddit.com/r/LocalLLaMA/comments/ghi789/weekly/",
+     "permalink": "/r/LocalLLaMA/comments/ghi789/weekly/",
+     "score": 5,
+     "num_comments": 2,
+     "created_utc": 1794220000.0,
+     "link_flair_text": null,
+     "subreddit": "LocalLLaMA",
+     "is_self": true,
+     "stickied": true,
+     "author": "AutoModerator",
+     "selftext": ""
+    }
+   }
+  ]
+ }
+}

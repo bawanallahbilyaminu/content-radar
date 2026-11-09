@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
-from content_radar.collectors import arxiv, cisa_kev, github, hackernews, huggingface, rss
+from content_radar.collectors import (
+    arxiv,
+    cisa_kev,
+    github,
+    hackernews,
+    huggingface,
+    reddit,
+    rss,
+    stackexchange,
+)
 from content_radar.collectors.base import Collector
 
 REGISTRY: dict[str, Collector] = {
@@ -12,6 +21,8 @@ REGISTRY: dict[str, Collector] = {
     "arxiv": arxiv.collect,
     "cisa_kev": cisa_kev.collect,
     "rss": rss.collect,
+    "reddit": reddit.collect,
+    "stackexchange": stackexchange.collect,
 }
 
 __all__ = ["REGISTRY", "Collector"]

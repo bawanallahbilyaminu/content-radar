@@ -21,7 +21,10 @@ def settings(tmp_path):
 def transport():
     return mock_transport(
         {
+            "tags=ask_hn": load_json_fixture("hn_ask.json"),
             "hn.algolia.com": load_json_fixture("hn_search.json"),
+            "reddit.com": load_fixture("reddit_rss.xml"),
+            "api.stackexchange.com": load_json_fixture("se_questions.json"),
             "api.github.com": load_json_fixture("github_search.json"),
             "api/models": load_json_fixture("hf_models.json"),
             "api/daily_papers": load_json_fixture("hf_papers.json"),

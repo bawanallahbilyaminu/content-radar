@@ -10,6 +10,8 @@ import yaml
 from dotenv import load_dotenv
 from pydantic import BaseModel, ConfigDict, Field
 
+from content_radar.timeutil import set_timezone
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config.yaml"
 
@@ -57,6 +59,7 @@ class Secrets(BaseModel):
     notion_token: str | None = None
     notion_ideas_db_id: str | None = None
     youtube_api_key: str | None = None
+    stackexchange_key: str | None = None
 
     @classmethod
     def from_env(cls) -> Secrets:
@@ -73,6 +76,7 @@ class Secrets(BaseModel):
             notion_token=get("NOTION_TOKEN"),
             notion_ideas_db_id=get("NOTION_IDEAS_DB_ID"),
             youtube_api_key=get("YOUTUBE_API_KEY"),
+            stackexchange_key=get("STACKEXCHANGE_KEY"),
         )
 
 
@@ -100,4 +104,5 @@ def load_settings(config_path: Path | None = None, env_file: Path | None = None)
     raw.pop("secrets", None)  # secrets never come from yaml
     settings = Settings.model_validate(raw)
     settings.secrets = Secrets.from_env()
+    set_timezone(settings.run.timezone)
     return settings

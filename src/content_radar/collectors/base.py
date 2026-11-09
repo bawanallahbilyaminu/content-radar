@@ -56,6 +56,11 @@ class HttpClient:
             )
             self._sleep(delay)
 
+    def post(self, url: str, **kwargs: Any) -> httpx.Response:
+        response = self._client.post(url, **kwargs)
+        response.raise_for_status()
+        return response
+
     def get_json(self, url: str, **kwargs: Any) -> Any:
         return self.get(url, **kwargs).json()
 

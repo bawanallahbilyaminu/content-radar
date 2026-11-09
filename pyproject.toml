@@ -12,7 +12,7 @@ dependencies = [
     "pyyaml>=6.0",
     "python-dotenv>=1.0",
     "notion-client>=2.2",
-    "praw>=7.7",
+    "tzdata>=2024.1",
 ]
 
 [dependency-groups]

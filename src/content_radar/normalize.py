@@ -5,10 +5,11 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Iterable
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 
 from content_radar.config import NicheConfig
 from content_radar.models import Item, normalize_title
+from content_radar.timeutil import now_local
 
 log = logging.getLogger(__name__)
 
@@ -163,7 +164,7 @@ def within_lookback(
     """Keep items published inside the window. Items with no date are kept (feeds vary).
     `per_source_hours` overrides the default window per source family (e.g. arxiv: 120).
     """
-    now = now or datetime.now(UTC)
+    now = now or now_local()
     overrides = per_source_hours or {}
 
     def keep(item: Item) -> bool:

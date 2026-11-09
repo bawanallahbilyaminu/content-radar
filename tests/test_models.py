@@ -25,10 +25,11 @@ def test_item_fingerprint_matches_for_same_story():
     assert a.fingerprint() == b.fingerprint()
 
 
-def test_item_published_at_gets_utc():
+def test_item_published_at_becomes_aware():
     item = Item(source="hn", url="https://a.com", title="t", published_at=datetime(2026, 1, 1))
     assert item.published_at is not None
-    assert item.published_at.tzinfo is UTC
+    assert item.published_at.tzinfo is not None
+    assert item.published_at == datetime(2026, 1, 1, tzinfo=UTC)  # same instant
 
 
 def test_item_age_hours():

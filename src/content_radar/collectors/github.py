@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 
 from content_radar.collectors.base import HttpClient, parse_datetime
 from content_radar.config import Settings
 from content_radar.models import Item
 from content_radar.normalize import Tagger
+from content_radar.timeutil import now_local
 
 API = "https://api.github.com/search/repositories"
 
@@ -19,7 +20,7 @@ def collect(settings: Settings, client: HttpClient) -> list[Item]:
     min_stars = int(cfg.get("min_stars", 30))
     min_forks = int(cfg.get("min_forks", 3))
     topics = {t.lower() for t in cfg.get("topics", [])}
-    since = (datetime.now(UTC) - timedelta(days=days)).date().isoformat()
+    since = (now_local() - timedelta(days=days)).date().isoformat()
 
     headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
     if settings.secrets.github_token:

@@ -100,7 +100,7 @@ niche:
     - egypt
     - m-pesa
   # Only community sources produce demand questions; news headlines ending in "?" do not.
-  question_sources: [reddit, hackernews]
+  question_sources: [reddit, hackernews, stackexchange]
   # Title phrasing that marks a demand signal (question / help post).
   question_markers:
     - "?"
@@ -181,6 +181,24 @@ sources:
         url: https://techcabal.com/feed/
         niche: other
         local: true
+      # --- Nigerian sources with real feeds (verified 2026-11-09) ---
+      - name: ndpc
+        url: https://ndpc.gov.ng/feed/
+        niche: cyber
+        local: true
+      - name: nitda
+        url: https://nitda.gov.ng/feed/
+        niche: other
+        local: true
+      - name: techeconomy
+        url: https://techeconomy.ng/feed.xml
+        niche: other
+        local: true
+      - name: benjamindada
+        url: https://www.benjamindada.com/rss/
+        niche: other
+        local: true
+      # ngCERT (cert.gov.ng) returns 403 to non-browser clients: no feed available, skipped.
       # techpoint.africa returns 403 to non-browser clients; listed but disabled.
       # - name: techpoint
       #   url: https://techpoint.africa/feed/
@@ -189,6 +207,8 @@ sources:
   reddit:
     enabled: true
     limit: 40          # per subreddit per listing
+    # App-only (client_credentials) read-only OAuth. Post-level fields only:
+    # title, url, score, num_comments, created_utc, flair. No authors, no bodies.
     subreddits:
       - MachineLearning
       - LocalLLaMA
@@ -198,7 +218,20 @@ sources:
       - cybersecurity
       - netsec
       - Nigeria
-    # Used when OAuth creds are missing: public RSS per subreddit.
+    # Used when OAuth creds are missing or refused: public Atom feed per subreddit.
     rss_fallback: true
+  stackexchange:
+    enabled: true
+    limit: 60                 # total after ranking by votes
+    lookback_hours: 168       # questions need days to accumulate votes
+    pagesize: 30
+    min_score: 1
+    min_quota_remaining: 20   # stop early rather than exhaust the 300/day anonymous quota
+    sites:
+      - site: stackoverflow
+        tags: [python, machine-learning, pandas, llm, docker]
+      - site: datascience
+      - site: security
+      - site: ai
   youtube:
     enabled: false     # Phase 5

@@ -26,7 +26,7 @@ def test_registry_has_all_keyless_sources():
 
 def test_hackernews(settings):
     hn = load_json_fixture("hn_search.json")
-    client = _client({"hn.algolia.com": hn})
+    client = _client({"tags=ask_hn": {"hits": []}, "hn.algolia.com": hn})
     items = hackernews.collect(settings, client)
     assert items
     first = items[0]
@@ -42,7 +42,9 @@ def test_hackernews_keeps_only_niche_stories(settings):
     hn["hits"].append(
         {"objectID": "1", "title": "Best sourdough starter", "url": "https://b.com", "points": 500}
     )
-    items = hackernews.collect(settings, _client({"hn.algolia.com": hn}))
+    items = hackernews.collect(
+        settings, _client({"tags=ask_hn": {"hits": []}, "hn.algolia.com": hn})
+    )
     assert all("sourdough" not in i.title.lower() for i in items)
 
 
@@ -117,12 +119,8 @@ def test_cisa_kev(settings, monkeypatch):
     newest = max(v["dateAdded"] for v in data["vulnerabilities"])
     from datetime import UTC, datetime
 
-    class FakeDT(datetime):
-        @classmethod
-        def now(cls, tz=None):
-            return datetime.fromisoformat(newest).replace(tzinfo=UTC)
-
-    monkeypatch.setattr(cisa_kev, "datetime", FakeDT)
+    frozen = datetime.fromisoformat(newest).replace(tzinfo=UTC)
+    monkeypatch.setattr(cisa_kev, "now_local", lambda: frozen)
     items = cisa_kev.collect(settings, _client({"cisa.gov": data}))
     assert items
     assert all(i.kind == "vuln" for i in items)

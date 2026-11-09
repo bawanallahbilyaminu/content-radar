@@ -49,6 +49,16 @@ tagged list of `Item`s from every source without any LLM calls.
 8. **Tests** — one per collector (fixture-driven), one for dedupe, one for
    config loading. Add a `conftest.py` that blocks real HTTP.
 
+   - `stackexchange.py` — **primary demand-signal source.** Stack Exchange API
+     2.3, recent high-vote questions from stackoverflow (python,
+     machine-learning, pandas, llm, docker), datascience, security and ai.
+     `kind="question"`. Honours `backoff`, stops on throttle errors and
+     below a quota floor. Optional `STACKEXCHANGE_KEY` raises the quota.
+   - Nigerian feeds verified: NDPC, NITDA, Techeconomy, Benjamin Dada.
+     ngCERT and Techpoint block non-browser clients and are skipped (never
+     scraped or worked around).
+   - All dates and windows use Africa/Lagos (`timeutil.py`).
+
 **Keys needed:** Reddit script app (`REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`,
 `REDDIT_USER_AGENT`). Optional `GITHUB_TOKEN` for higher Search API limits.
 Everything else in Phase 1 is keyless.

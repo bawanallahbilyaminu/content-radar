@@ -7,6 +7,7 @@ from datetime import UTC, date, datetime, timedelta
 from content_radar.collectors.base import HttpClient
 from content_radar.config import Settings
 from content_radar.models import Item
+from content_radar.timeutil import now_local
 
 FEED = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 
@@ -15,7 +16,7 @@ def collect(settings: Settings, client: HttpClient) -> list[Item]:
     cfg = settings.source("cisa_kev")
     # KEV additions are sparse, so look back further than the general window by default.
     lookback_days = int(cfg.get("lookback_days", 7))
-    cutoff = (datetime.now(UTC) - timedelta(days=lookback_days)).date()
+    cutoff = (now_local() - timedelta(days=lookback_days)).date()
 
     data = client.get_json(FEED)
     vulns = sorted(

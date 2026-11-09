@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import re
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Literal
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator
+
+from content_radar.timeutil import now_local, to_local
 
 ItemKind = Literal["trend", "question", "paper", "vuln", "repo", "video"]
 IdeaFormat = Literal["news", "tutorial", "explainer"]
@@ -72,9 +74,8 @@ class Item(BaseModel):
     @field_validator("published_at")
     @classmethod
     def _ensure_tz(cls, v: datetime | None) -> datetime | None:
-        if v is not None and v.tzinfo is None:
-            return v.replace(tzinfo=UTC)
-        return v
+        """Naive values are taken as UTC; everything is stored in the local (Lagos) zone."""
+        return to_local(v) if v is not None else None
 
     @property
     def canonical(self) -> str:
@@ -87,7 +88,7 @@ class Item(BaseModel):
     def age_hours(self, now: datetime | None = None) -> float | None:
         if self.published_at is None:
             return None
-        now = now or datetime.now(UTC)
+        now = now or now_local()
         return max(0.0, (now - self.published_at).total_seconds() / 3600)
 
 
