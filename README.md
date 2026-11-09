@@ -6,10 +6,11 @@ uses Claude to turn the strongest ones into **ranked video ideas with a
 Nigerian / African angle**. Ideas land in a Notion database that serves as a
 post-idea backlog.
 
-**Status:** Phases 1 to 3 complete: collect, normalize, dedupe, deterministic
+**Status:** Phases 1 to 4 complete: collect, normalize, dedupe, deterministic
 scoring, a batched Haiku filter, Sonnet synthesis into ranked `Idea` objects under
-a per-run cost guard, and a create-only Notion sink. The daily schedule (Phase 4)
-comes next. See `docs/PLAN.md` for the plan and `CLAUDE.md` for the project brief.
+a per-run cost guard, a create-only Notion sink, and a daily GitHub Actions run.
+Phase 5 (YouTube collector, weekly digest, feedback loop) is next. See
+`docs/PLAN.md` for the plan and `CLAUDE.md` for the project brief.
 
 ## Setup (dev, Windows or Linux)
 
@@ -150,8 +151,47 @@ keywords, question markers, per-source limits and windows, subreddits, Stack
 Exchange sites and tags, RSS feeds, and model names. Secrets only ever come from
 `.env` or GitHub repo secrets.
 
-## Schedule
+## Schedule (GitHub Actions)
 
-Coming in Phase 4: a GitHub Actions workflow runs daily at 06:00 Africa/Lagos
-(05:00 UTC) with a manual trigger. Dedupe state lives in Notion, so the workflow
-never commits back to the repo.
+`.github/workflows/daily.yml` runs every day at **06:00 Africa/Lagos (05:00 UTC)**
+on an Ubuntu runner: `uv sync --frozen`, then `python -m content_radar run`. The
+run log is uploaded as an artifact (14 days). A concurrency group stops two runs
+from overlapping. Dedupe state lives in Notion, so the workflow never commits back
+to the repo. `.github/workflows/ci.yml` runs ruff and pytest on every push and PR.
+
+### Repo secrets
+
+Settings -> Secrets and variables -> Actions, or from a terminal with the GitHub
+CLI (each command prompts for the value, so nothing lands in shell history):
+
+```bash
+gh secret set ANTHROPIC_API_KEY
+gh secret set NOTION_TOKEN
+gh secret set NOTION_IDEAS_DB_ID
+# optional
+gh secret set REDDIT_CLIENT_ID
+gh secret set REDDIT_CLIENT_SECRET
+gh secret set REDDIT_USER_AGENT
+gh secret set STACKEXCHANGE_KEY
+```
+
+| Secret | Required | Purpose |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | yes | Haiku filter and Sonnet synthesis |
+| `NOTION_TOKEN` | yes | write ideas to Notion |
+| `NOTION_IDEAS_DB_ID` | yes | the Ideas database |
+| `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` | no | Reddit OAuth; RSS fallback without them |
+| `STACKEXCHANGE_KEY` | no | higher Stack Exchange quota |
+| `GITHUB_TOKEN` | automatic | provided by Actions; raises the Search API limit |
+
+### Manual run
+
+Actions -> "Daily research run" -> Run workflow. Tick **dry_run** to print ideas
+without writing to Notion, or set **sources** to a subset such as
+`hackernews,stackexchange`. From a terminal:
+
+```bash
+gh workflow run daily.yml                       # full run, writes to Notion
+gh workflow run daily.yml -f dry_run=true       # dry run
+gh run watch                                    # follow the latest run
+```
