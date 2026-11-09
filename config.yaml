@@ -4,32 +4,193 @@ run:
   max_ideas_per_run: 7
   lookback_hours: 48
   timezone: Africa/Lagos
+  user_agent: "content-radar/0.1 (+https://github.com/bawanallahbilyaminu/content-radar)"
+  http_timeout_seconds: 20
 
 models:
-  filter: claude-haiku-5-5       # cheap per-item tagging / filtering
-  synthesize: claude-sonnet-5-5  # final idea synthesis
+  filter: claude-haiku-5-5        # cheap per-item tagging / filtering, batched
+  synthesize: claude-sonnet-5-5   # final idea synthesis
+  filter_batch_size: 50
 
 niche:
-  keywords: []        # filled in Phase 1
-  local_keywords: []  # Nigeria / Africa angle terms
+  # Used by keyword-driven collectors (HN, GitHub) and for niche_tags.
+  keywords:
+    - ai
+    - artificial intelligence
+    - llm
+    - large language model
+    - gpt
+    - claude
+    - gemini
+    - llama
+    - openai
+    - anthropic
+    - deepseek
+    - mistral
+    - machine learning
+    - deep learning
+    - neural network
+    - transformer
+    - rag
+    - agents
+    - agentic
+    - mcp
+    - fine-tuning
+    - prompt
+    - hugging face
+    - pytorch
+    - data science
+    - data engineering
+    - pandas
+    - sql
+    - dbt
+    - spark
+    - airflow
+    - analytics
+    - cybersecurity
+    - infosec
+    - ransomware
+    - phishing
+    - malware
+    - vulnerability
+    - cve
+    - zero-day
+    - exploit
+    - breach
+    - data leak
+    - hacked
+    - scam
+  # Signals that an item already has a Nigeria / Africa angle.
+  local_keywords:
+    - nigeria
+    - nigerian
+    - lagos
+    - abuja
+    - kano
+    - sokoto
+    - africa
+    - african
+    - hausa
+    - yoruba
+    - igbo
+    - swahili
+    - ndpa
+    - ndpc
+    - nitda
+    - cbn
+    - naira
+    - mtn
+    - airtel
+    - flutterwave
+    - paystack
+    - moniepoint
+    - opay
+    - palmpay
+    - kuda
+    - jumia
+    - andela
+    - interswitch
+    - nimc
+    - bvn
+    - jamb
+    - waec
+    - kenya
+    - ghana
+    - south africa
+    - egypt
+    - m-pesa
+  # Title phrasing that marks a demand signal (question / help post).
+  question_markers:
+    - "?"
+    - "how do i"
+    - "how to"
+    - "how can i"
+    - "help"
+    - "confused"
+    - "should i"
+    - "is it worth"
+    - "what's the best"
+    - "what is the best"
+    - "why does"
+    - "why is"
+    - "anyone"
+    - "advice"
+    - "recommend"
+    - "beginner"
+    - "roadmap"
+    - "explain"
+    - "eli5"
 
 sources:
   hackernews:
     enabled: true
-  reddit:
-    enabled: true
-    subreddits: []
+    limit: 60
+    min_points: 20
   github:
     enabled: true
+    limit: 40
+    created_within_days: 7
+    topics:
+      - llm
+      - ai
+      - machine-learning
+      - agents
+      - rag
+      - mcp
+      - security
+      - cybersecurity
+      - data-engineering
   huggingface:
     enabled: true
+    limit: 30
+    papers_limit: 20
   arxiv:
     enabled: true
-    categories: []
+    limit: 60
+    categories: [cs.AI, cs.LG, cs.CL, cs.CR]
   cisa_kev:
     enabled: true
+    limit: 30
   rss:
     enabled: true
-    feeds: []
+    limit: 25          # per feed
+    feeds:
+      - name: bleepingcomputer
+        url: https://www.bleepingcomputer.com/feed/
+        niche: cyber
+      - name: thehackernews
+        url: https://feeds.feedburner.com/TheHackersNews
+        niche: cyber
+      - name: krebs
+        url: https://krebsonsecurity.com/feed/
+        niche: cyber
+      - name: techcrunch_ai
+        url: https://techcrunch.com/category/artificial-intelligence/feed/
+        niche: ai_ml
+      - name: verge_ai
+        url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
+        niche: ai_ml
+      - name: techcabal
+        url: https://techcabal.com/feed/
+        niche: other
+        local: true
+      - name: techpoint
+        url: https://techpoint.africa/feed/
+        niche: other
+        local: true
+  reddit:
+    enabled: true
+    limit: 40          # per subreddit per listing
+    subreddits:
+      - MachineLearning
+      - LocalLLaMA
+      - artificial
+      - datascience
+      - dataengineering
+      - cybersecurity
+      - netsec
+      - Nigeria
+    # Used when OAuth creds are missing: public RSS per subreddit.
+    rss_fallback: true
   youtube:
-    enabled: false    # Phase 5
+    enabled: false     # Phase 5
