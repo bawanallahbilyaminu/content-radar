@@ -31,7 +31,7 @@ class HttpClient:
         timeout: float = 20.0,
         max_retries: int = 3,
         transport: httpx.BaseTransport | None = None,
-        sleep: Callable[[float], None] = time.sleep,
+        sleep: Callable[[float], None] | None = None,
     ) -> None:
         self._client = httpx.Client(
             headers={"User-Agent": user_agent, "Accept": "application/json, text/xml, */*"},
@@ -40,7 +40,7 @@ class HttpClient:
             transport=transport,
         )
         self.max_retries = max_retries
-        self._sleep = sleep
+        self._sleep = sleep or (lambda d: time.sleep(d))
 
     def get(self, url: str, **kwargs: Any) -> httpx.Response:
         attempt = 0

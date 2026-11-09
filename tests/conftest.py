@@ -21,6 +21,14 @@ def _no_network(monkeypatch):
     monkeypatch.setattr(httpx.HTTPTransport, "handle_request", _blocked)
 
 
+@pytest.fixture(autouse=True)
+def _no_sleep(monkeypatch):
+    """Backoff must not slow the suite down."""
+    import time
+
+    monkeypatch.setattr(time, "sleep", lambda _d: None)
+
+
 def load_fixture(name: str) -> str:
     return (FIXTURES / name).read_text(encoding="utf-8")
 
