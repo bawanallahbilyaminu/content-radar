@@ -32,6 +32,7 @@ class NicheConfig(BaseModel):
     keywords: list[str] = Field(default_factory=list)
     local_keywords: list[str] = Field(default_factory=list)
     question_markers: list[str] = Field(default_factory=list)
+    question_sources: list[str] = Field(default_factory=lambda: ["reddit", "hackernews"])
 
 
 class SourceConfig(BaseModel):

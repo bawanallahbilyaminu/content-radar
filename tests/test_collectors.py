@@ -55,6 +55,22 @@ def test_github(settings):
     assert items[0].engagement["stars"] == data["items"][0]["stargazers_count"]
 
 
+def test_github_drops_star_farm_repos(settings):
+    data = load_json_fixture("github_search.json")
+    spam = dict(data["items"][0])
+    spam.update(
+        {
+            "full_name": "x/ai-trainer-tool",
+            "html_url": "https://github.com/x/ai-trainer-tool",
+            "stargazers_count": 400,
+            "forks_count": 0,
+        }
+    )
+    data["items"].insert(0, spam)
+    items = github.collect(settings, _client({"api.github.com": data}))
+    assert all(i.title != "x/ai-trainer-tool" for i in items)
+
+
 def test_github_sends_token_when_present(settings):
     seen: dict[str, str] = {}
 

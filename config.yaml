@@ -2,7 +2,7 @@
 
 run:
   max_ideas_per_run: 7
-  lookback_hours: 48
+  lookback_hours: 48          # default window; a source may set its own lookback_hours
   timezone: Africa/Lagos
   user_agent: "content-radar/0.1 (+https://github.com/bawanallahbilyaminu/content-radar)"
   http_timeout_seconds: 20
@@ -99,6 +99,8 @@ niche:
     - south africa
     - egypt
     - m-pesa
+  # Only community sources produce demand questions; news headlines ending in "?" do not.
+  question_sources: [reddit, hackernews]
   # Title phrasing that marks a demand signal (question / help post).
   question_markers:
     - "?"
@@ -130,6 +132,8 @@ sources:
     enabled: true
     limit: 40
     created_within_days: 7
+    min_stars: 30
+    min_forks: 3              # star-farmed spam repos have hundreds of stars and zero forks
     topics:
       - llm
       - ai
@@ -144,13 +148,16 @@ sources:
     enabled: true
     limit: 30
     papers_limit: 20
+    lookback_hours: 168       # daily papers lag a few days; trending models carry no date
   arxiv:
     enabled: true
     limit: 60
+    lookback_hours: 120       # no announcements at weekends
     categories: [cs.AI, cs.LG, cs.CL, cs.CR]
   cisa_kev:
     enabled: true
     limit: 30
+    lookback_hours: 168       # KEV additions are sparse
   rss:
     enabled: true
     limit: 25          # per feed
@@ -174,10 +181,11 @@ sources:
         url: https://techcabal.com/feed/
         niche: other
         local: true
-      - name: techpoint
-        url: https://techpoint.africa/feed/
-        niche: other
-        local: true
+      # techpoint.africa returns 403 to non-browser clients; listed but disabled.
+      # - name: techpoint
+      #   url: https://techpoint.africa/feed/
+      #   niche: other
+      #   local: true
   reddit:
     enabled: true
     limit: 40          # per subreddit per listing

@@ -63,7 +63,12 @@ def collect_items(
             raw.extend(items)
 
     tagged = [tagger.apply(i) for i in raw]
-    fresh = within_lookback(tagged, hours=settings.run.lookback_hours)
+    overrides = {
+        name: int(cfg.get("lookback_hours"))
+        for name, cfg in settings.sources.items()
+        if cfg.get("lookback_hours") is not None
+    }
+    fresh = within_lookback(tagged, hours=settings.run.lookback_hours, per_source_hours=overrides)
     result.dropped_stale = len(tagged) - len(fresh)
     unique = dedupe(fresh)
     result.dropped_duplicate = len(fresh) - len(unique)

@@ -17,6 +17,7 @@ def collect(settings: Settings, client: HttpClient) -> list[Item]:
     tagger = Tagger(settings.niche)
     days = int(cfg.get("created_within_days", 7))
     min_stars = int(cfg.get("min_stars", 30))
+    min_forks = int(cfg.get("min_forks", 3))
     topics = {t.lower() for t in cfg.get("topics", [])}
     since = (datetime.now(UTC) - timedelta(days=days)).date().isoformat()
 
@@ -39,6 +40,8 @@ def collect(settings: Settings, client: HttpClient) -> list[Item]:
 
     items: list[Item] = []
     for repo in data.get("items", []):
+        if int(repo.get("forks_count") or 0) < min_forks:
+            continue  # star-farmed spam: hundreds of stars, zero forks
         repo_topics = {t.lower() for t in repo.get("topics", [])}
         text = (
             f"{repo.get('full_name', '')} {repo.get('description') or ''} {' '.join(repo_topics)}"

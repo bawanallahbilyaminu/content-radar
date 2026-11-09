@@ -8,6 +8,7 @@ NICHE = NicheConfig(
     keywords=["llm", "ransomware", "pandas", "ai"],
     local_keywords=["nigeria", "hausa", "ndpa"],
     question_markers=["?", "how do i", "help"],
+    question_sources=["reddit", "hn"],
 )
 
 
@@ -36,6 +37,8 @@ def test_tagger_promotes_questions():
     assert "ai_ml" in q.niche_tags
     paper = tagger.apply(_item(title="Why do LLMs hallucinate?", kind="paper"))
     assert paper.kind == "paper"  # only trends get promoted
+    news = tagger.apply(_item(source="rss:verge", title="Is the AI bubble about to pop?"))
+    assert news.kind == "trend"  # headlines are not demand signals
 
 
 def test_dedupe_by_url_and_title_merges_engagement():
@@ -66,3 +69,13 @@ def test_within_lookback_keeps_undated():
     stale = _item(url="https://a.com/s", title="s", published_at=now - timedelta(hours=100))
     undated = _item(url="https://a.com/u", title="u")
     assert within_lookback([fresh, stale, undated], hours=48, now=now) == [fresh, undated]
+
+
+def test_within_lookback_per_source_override():
+    now = datetime(2026, 1, 10, tzinfo=UTC)
+    paper = _item(source="arxiv", published_at=now - timedelta(hours=100))
+    news = _item(
+        source="rss:x", url="https://a.com/n", title="n", published_at=now - timedelta(hours=100)
+    )
+    kept = within_lookback([paper, news], hours=48, now=now, per_source_hours={"arxiv": 120})
+    assert kept == [paper]

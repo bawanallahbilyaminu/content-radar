@@ -83,6 +83,7 @@ class Tagger:
         self.keywords = [(k.lower(), _word_pattern(k)) for k in niche.keywords]
         self.local = [(k.lower(), _word_pattern(k)) for k in niche.local_keywords]
         self.question_markers = [m.lower() for m in niche.question_markers]
+        self.question_sources = {q.lower() for q in niche.question_sources}
 
     def matched_keywords(self, text: str) -> list[str]:
         text = text.lower()
@@ -115,7 +116,8 @@ class Tagger:
         tags = self.tags_for(text)
         merged = list(dict.fromkeys([*item.niche_tags, *tags]))
         kind = item.kind
-        if kind == "trend" and self.is_question(item.title):
+        family = item.source.split(":")[0].lower()
+        if kind == "trend" and family in self.question_sources and self.is_question(item.title):
             kind = "question"
         return item.model_copy(update={"niche_tags": merged, "kind": kind})
 
@@ -152,8 +154,22 @@ def _merge_duplicate(keep: Item, dup: Item) -> None:
         keep.kind = "question"
 
 
-def within_lookback(items: Iterable[Item], hours: int, now: datetime | None = None) -> list[Item]:
-    """Keep items published inside the window. Items with no date are kept (feeds vary)."""
+def within_lookback(
+    items: Iterable[Item],
+    hours: int,
+    now: datetime | None = None,
+    per_source_hours: dict[str, int] | None = None,
+) -> list[Item]:
+    """Keep items published inside the window. Items with no date are kept (feeds vary).
+    `per_source_hours` overrides the default window per source family (e.g. arxiv: 120).
+    """
     now = now or datetime.now(UTC)
-    cutoff = now - timedelta(hours=hours)
-    return [i for i in items if i.published_at is None or i.published_at >= cutoff]
+    overrides = per_source_hours or {}
+
+    def keep(item: Item) -> bool:
+        if item.published_at is None:
+            return True
+        window = overrides.get(item.source.split(":")[0], hours)
+        return item.published_at >= now - timedelta(hours=window)
+
+    return [i for i in items if keep(i)]

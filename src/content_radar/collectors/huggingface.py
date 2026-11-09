@@ -29,7 +29,8 @@ def collect(settings: Settings, client: HttpClient) -> list[Item]:
                 url=f"https://huggingface.co/{model_id}",
                 title=f"{model_id} ({pipeline})",
                 summary=f"Trending Hugging Face model. Task: {pipeline}. Tags: {', '.join(tags)}",
-                published_at=parse_datetime(model.get("createdAt")),
+                # createdAt is often months old; trending is a now-signal, so leave undated.
+                published_at=None,
                 engagement={
                     "likes": float(model.get("likes") or 0),
                     "downloads": float(model.get("downloads") or 0),
