@@ -1,0 +1,35 @@
+# Content Radar configuration. Secrets live in .env, never here.
+
+run:
+  max_ideas_per_run: 7
+  lookback_hours: 48
+  timezone: Africa/Lagos
+
+models:
+  filter: claude-haiku-5-5       # cheap per-item tagging / filtering
+  synthesize: claude-sonnet-5-5  # final idea synthesis
+
+niche:
+  keywords: []        # filled in Phase 1
+  local_keywords: []  # Nigeria / Africa angle terms
+
+sources:
+  hackernews:
+    enabled: true
+  reddit:
+    enabled: true
+    subreddits: []
+  github:
+    enabled: true
+  huggingface:
+    enabled: true
+  arxiv:
+    enabled: true
+    categories: []
+  cisa_kev:
+    enabled: true
+  rss:
+    enabled: true
+    feeds: []
+  youtube:
+    enabled: false    # Phase 5
