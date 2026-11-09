@@ -10,7 +10,7 @@ no secrets in git, tests never touch the network.
 
 ---
 
-## Phase 1 — Collect, normalize, dedupe, CLI
+## Phase 1 — Collect, normalize, dedupe, CLI ✅
 
 Goal: `python -m content_radar run --dry-run --no-sink` prints a deduplicated,
 tagged list of `Item`s from every source without any LLM calls.
@@ -68,9 +68,15 @@ tagged question posts.
 
 ---
 
-## Phase 2 — Score and synthesize
+## Phase 2 — Score and synthesize ✅
 
 Goal: the dry run prints up to 7 validated `Idea` objects with scores.
+
+Done 2026-11-09. Additions over the original plan: a **cost guard**
+(`budget.max_cost_usd_per_run`, default $0.25) that estimates with the free
+`count_tokens` endpoint and skips LLM steps with a logged reason; structured
+outputs via `messages.parse`; truncated or malformed model output fails open
+(filter) or retries once (synthesis) instead of crashing the run.
 
 1. **`scoring.py`** (deterministic, no LLM) — per-item signals: recency
    decay, engagement velocity (points / comments / stars per hour), question

@@ -6,9 +6,10 @@ uses Claude to turn the strongest ones into **ranked video ideas with a
 Nigerian / African angle**. Ideas land in a Notion database that serves as a
 post-idea backlog.
 
-**Status:** Phase 1 complete (collect, normalize, dedupe, CLI). Scoring, LLM
-synthesis, the Notion sink and the daily schedule come next. See
-`docs/PLAN.md` for the plan and `CLAUDE.md` for the project brief.
+**Status:** Phases 1 and 2 complete: collect, normalize, dedupe, deterministic
+scoring, a batched Haiku filter and Sonnet synthesis into ranked `Idea` objects,
+all under a per-run cost guard. The Notion sink and the daily schedule come
+next. See `docs/PLAN.md` for the plan and `CLAUDE.md` for the project brief.
 
 ## Setup (dev, Windows or Linux)
 
@@ -20,9 +21,12 @@ cp .env.example .env         # then fill in the keys you have (all optional in P
 uv run python -m content_radar run --dry-run --no-sink
 ```
 
-`--dry-run` prints the collected items as JSON and writes nothing. Add
-`--sources hackernews,rss` to run a subset, `--limit 20` to print fewer items,
-and `-v` for debug logging. A per-source summary is printed to stderr.
+`--dry-run` runs the whole pipeline, including the Claude calls, and prints the
+ranked ideas as JSON without writing anywhere. Add `--skip-llm` to stop after
+collection (prints items instead), `--items` to print items even when ideas
+exist, `--sources hackernews,rss` to run a subset, `--limit 20` to print fewer
+records, and `-v` for debug logging. A per-source summary and the LLM token /
+cost summary are printed to stderr.
 
 ### Checks
 
@@ -66,6 +70,35 @@ the API's `backoff` field and stop early on throttle errors or a low quota.
 Sources that block non-browser clients (ngCERT, Techpoint Africa, Reddit's
 public JSON) are **skipped, never scraped or worked around**. X, TikTok and
 Instagram are out of scope.
+
+## Pipeline
+
+```
+collect -> tag/dedupe -> score & cluster -> Haiku filter (batched) -> Sonnet synthesis -> ideas
+```
+
+- **Scoring** (`scoring.py`, no LLM): recency decay by kind, log-scaled engagement,
+  bonuses for questions and local-angle items, title clustering, and a strong
+  bonus when the same topic appears on 2+ independent sources.
+- **Filter** (`filter.py`): the top 120 items go to `claude-haiku-5-5` in batches of
+  about 50 per call (never one call per item). Each verdict carries keep/drop,
+  niche, an honest local angle or null, and a demand flag. Items the model skips
+  are kept (fail-open).
+- **Synthesis** (`synthesize.py`): the top 25 clusters go to `claude-sonnet-5-5`
+  with the scoring rubric from `CLAUDE.md` (timeliness 25, demand 25, local angle
+  20, cross-source 15, effort 15). Output is schema-validated JSON. Every idea must
+  cite URLs from the collected items; invented URLs are dropped and the model gets
+  one retry with the validation errors. At most 7 ideas per run.
+- **Prompts** live in `src/content_radar/prompts/*.md`.
+
+### Cost guard
+
+`budget.max_cost_usd_per_run` in `config.yaml` (default **$0.25**) caps each run.
+Before any paid call the pipeline counts input tokens with the free
+`count_tokens` endpoint, adds the configured output estimates and the prices in
+`budget.pricing`, and skips the LLM steps with a logged reason if the projection
+exceeds the cap. Actual tokens and cost per call are logged; a typical run costs
+about $0.05.
 
 ## Time zone
 
