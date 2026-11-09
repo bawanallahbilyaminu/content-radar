@@ -220,6 +220,7 @@ sources:
       - Nigeria
     # Used when OAuth creds are missing or refused: public Atom feed per subreddit.
     rss_fallback: true
+    rss_delay_seconds: 6      # anonymous feed requests are rate-limited; space them out
   stackexchange:
     enabled: true
     limit: 60                 # total after ranking by votes

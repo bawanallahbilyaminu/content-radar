@@ -46,7 +46,9 @@ def collect(settings: Settings, client: HttpClient) -> list[Item]:
 
     if not cfg.get("rss_fallback", True):
         return []
-    return _collect_rss(client, subs, user_agent, cfg.limit)
+    return _collect_rss(
+        client, subs, user_agent, cfg.limit, delay=float(cfg.get("rss_delay_seconds", 6))
+    )
 
 
 # --- OAuth path -----------------------------------------------------------------
@@ -115,11 +117,25 @@ def _post_to_item(post: dict) -> Item | None:
 # --- RSS fallback ---------------------------------------------------------------
 
 
-def _collect_rss(client: HttpClient, subs: list[str], user_agent: str, limit: int) -> list[Item]:
+def _collect_rss(
+    client: HttpClient, subs: list[str], user_agent: str, limit: int, delay: float = 6.0
+) -> list[Item]:
+    """Public feeds are rate-limited for anonymous clients: space requests out and,
+    on a 429, stop for this run rather than retry. We never work around the limit."""
     items: list[Item] = []
-    for sub in subs:
+    for index, sub in enumerate(subs):
+        if index:
+            client.pause(delay)
         try:
-            text = client.get_text(PUBLIC_RSS.format(sub=sub), headers={"User-Agent": user_agent})
+            text = client.get_text(
+                PUBLIC_RSS.format(sub=sub), headers={"User-Agent": user_agent}, max_retries=0
+            )
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 429:
+                log.warning("reddit rss rate-limited at r/%s; stopping for this run", sub)
+                break
+            log.warning("reddit rss r/%s failed: %s", sub, exc)
+            continue
         except httpx.HTTPError as exc:
             log.warning("reddit rss r/%s failed: %s", sub, exc)
             continue

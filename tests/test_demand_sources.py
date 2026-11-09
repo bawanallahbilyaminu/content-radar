@@ -73,15 +73,22 @@ def test_reddit_oauth_path_uses_client_credentials_and_drops_authors(settings):
 
 
 def test_reddit_falls_back_to_rss_when_credentials_missing(settings):
-    settings.sources["reddit"].model_extra["subreddits"] = ["MachineLearning", "Nigeria"]
-    client = _client(
-        {
-            "r/MachineLearning/new/.rss": load_fixture("reddit_rss.xml"),
-            "r/Nigeria/new/.rss": httpx.Response(429, text="slow down"),
-        }
-    )
+    settings.sources["reddit"].model_extra["subreddits"] = ["MachineLearning", "Nigeria", "netsec"]
+    calls: list[str] = []
+    paused: list[float] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request.url.path)
+        if "MachineLearning" in request.url.path:
+            return httpx.Response(200, text=load_fixture("reddit_rss.xml"))
+        return httpx.Response(429, text="slow down")
+
+    client = HttpClient(user_agent="t", transport=httpx.MockTransport(handler), sleep=paused.append)
     items = reddit.collect(settings, client)
     assert items and all(i.source == "reddit:MachineLearning" for i in items)
+    # paced between subreddits, no retry on 429, and stopped for the run after it
+    assert paused == [6.0]
+    assert calls == ["/r/MachineLearning/new/.rss", "/r/Nigeria/new/.rss"]
     assert all(i.published_at is not None for i in items)
     dumped = json.dumps([i.model_dump(mode="json") for i in items])
     assert "/u/" not in dumped  # author handles never stored

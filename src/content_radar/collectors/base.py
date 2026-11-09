@@ -42,11 +42,12 @@ class HttpClient:
         self.max_retries = max_retries
         self._sleep = sleep or (lambda d: time.sleep(d))
 
-    def get(self, url: str, **kwargs: Any) -> httpx.Response:
+    def get(self, url: str, max_retries: int | None = None, **kwargs: Any) -> httpx.Response:
+        retries = self.max_retries if max_retries is None else max_retries
         attempt = 0
         while True:
             response = self._client.get(url, **kwargs)
-            if response.status_code not in RETRY_STATUSES or attempt >= self.max_retries:
+            if response.status_code not in RETRY_STATUSES or attempt >= retries:
                 response.raise_for_status()
                 return response
             attempt += 1
@@ -66,6 +67,11 @@ class HttpClient:
 
     def get_text(self, url: str, **kwargs: Any) -> str:
         return self.get(url, **kwargs).text
+
+    def pause(self, seconds: float) -> None:
+        """Polite spacing between requests to the same host."""
+        if seconds > 0:
+            self._sleep(seconds)
 
     def close(self) -> None:
         self._client.close()
