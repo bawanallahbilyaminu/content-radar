@@ -148,7 +148,21 @@ def test_sourced_angle_must_cite_a_local_item(settings):
     )
     assert fake.angle_evidence == "assumed"
     assert fake.angle_source is None
-    assert fake.score == 20 + 20 + 6 + 5 + 10
+    assert fake.score == 20 + 20 + 3 + 5 + 10  # generic phrasing -> capped at 3
+
+    # Specific assumed angle: capped at 12
+    specific, _ = enforce(
+        _draft(
+            ["https://a.com/llm"],
+            angle="Nigerian devs take remote coding tests from unknown recruiters",
+            angle_evidence="assumed",
+            score_breakdown=bd,
+        ),
+        ctx,
+        settings,
+    )
+    assert specific.score == 20 + 20 + 12 + 5 + 10
+    assert specific.score_breakdown["local_angle"] == 12
 
     # angle "none" -> zero local points whatever the model claimed
     none, _ = enforce(
@@ -199,7 +213,12 @@ class FakeNotion:
         self.databases = SimpleNamespace(
             retrieve=lambda database_id: {"id": database_id, "data_sources": [{"id": "ds_1"}]}
         )
-        self.data_sources = SimpleNamespace(query=self._query)
+        self.updated = []
+        self.data_sources = SimpleNamespace(
+            query=self._query,
+            retrieve=lambda data_source_id: {"id": data_source_id, "properties": {"Title": {}}},
+            update=lambda data_source_id, properties: self.updated.append(properties),
+        )
         self.pages = SimpleNamespace(create=self._create)
 
     def _query(self, data_source_id, page_size, start_cursor=None):
@@ -269,6 +288,9 @@ def test_notion_sink_creates_only_new_rows_with_status_new():
     assert "the report" in props["Sources"]["rich_text"][0]["text"]["content"]
     assert props["Date Found"]["date"]["start"] == now_local().date().isoformat()
     assert set(props) == set(PROPERTIES)
+    # schema was completed before writing: every missing property got added, Title untouched
+    assert fake.updated and set(fake.updated[0]) == set(PROPERTIES) - {"Title"}
+    assert props["Score Breakdown"]["rich_text"][0]["text"]["content"] == ""
 
 
 def test_row_key_matches_idea_dedupe_key():

@@ -124,6 +124,9 @@ class Idea(BaseModel):
         default_factory=dict, description="url -> short phrase: the claim that source supports"
     )
     score: int = Field(ge=0, le=100)
+    score_breakdown: dict[str, int] = Field(
+        default_factory=dict, description="timeliness/demand/local_angle/cross_source/effort"
+    )
     effort: Effort
     evergreen: bool = False
     breaking: bool = False

@@ -24,7 +24,9 @@ class RunConfig(BaseModel):
     http_timeout_seconds: float = 20.0
     min_idea_score: int = 55
     breaking_window_hours: int = 48
-    assumed_angle_max_points: int = 6
+    assumed_angle_max_points: int = 12
+    generic_angle_max_points: int = 3
+    max_other_ideas: int = 1
 
 
 class ModelsConfig(BaseModel):
@@ -70,6 +72,9 @@ class NicheConfig(BaseModel):
     question_markers: list[str] = Field(default_factory=list)
     question_sources: list[str] = Field(default_factory=lambda: ["reddit", "hackernews"])
     local_sources: list[str] = Field(default_factory=list)
+    generic_angle_markers: list[str] = Field(
+        default_factory=lambda: ["many nigerians", "nigerians use", "popular in nigeria"]
+    )
 
 
 class SourceConfig(BaseModel):

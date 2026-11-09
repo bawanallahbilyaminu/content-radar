@@ -36,6 +36,7 @@ PROPERTIES: dict[str, dict[str, Any]] = {
     "Sources": {"rich_text": {}},
     "Primary Source": {"url": {}},
     "Score": {"number": {"format": "number"}},
+    "Score Breakdown": {"rich_text": {}},
     "Effort": {"select": {"options": [{"name": o} for o in ("low", "med", "high")]}},
     "Evergreen": {"checkbox": {}},
     "Breaking": {"checkbox": {}},
@@ -79,6 +80,7 @@ def idea_to_properties(idea: Idea, found_on: str) -> dict[str, Any]:
         "Sources": _rt(sources_text),
         "Primary Source": {"url": str(idea.sources[0])},
         "Score": {"number": idea.score},
+        "Score Breakdown": _rt(breakdown_text(idea.score_breakdown)),
         "Effort": _select(idea.effort),
         "Evergreen": {"checkbox": idea.evergreen},
         "Breaking": {"checkbox": idea.breaking},
@@ -86,6 +88,20 @@ def idea_to_properties(idea: Idea, found_on: str) -> dict[str, Any]:
         "Date Found": {"date": {"start": found_on}},
     }
     return props
+
+
+def breakdown_text(breakdown: dict[str, int]) -> str:
+    """T20 D18 L12 X10 E10 style summary; empty when unknown."""
+    if not breakdown:
+        return ""
+    keys = [
+        ("timeliness", "T"),
+        ("demand", "D"),
+        ("local_angle", "L"),
+        ("cross_source", "X"),
+        ("effort", "E"),
+    ]
+    return " ".join(f"{abbr}{breakdown.get(k, 0)}" for k, abbr in keys)
 
 
 def _plain(prop: dict[str, Any]) -> str:
@@ -119,6 +135,16 @@ class NotionSink:
             self._data_source_id = sources[0]["id"]
         return self._data_source_id
 
+    def ensure_schema(self) -> list[str]:
+        """Add any property from PROPERTIES that the data source lacks. Never removes."""
+        ds = self.client.data_sources.retrieve(data_source_id=self.data_source_id)
+        have = set((ds.get("properties") or {}).keys())
+        missing = {k: v for k, v in PROPERTIES.items() if k not in have}
+        if missing:
+            self.client.data_sources.update(data_source_id=self.data_source_id, properties=missing)
+            log.info("notion: added missing properties %s", sorted(missing))
+        return sorted(missing)
+
     def iter_rows(self) -> Iterable[dict[str, Any]]:
         cursor: str | None = None
         while True:
@@ -146,6 +172,7 @@ class NotionSink:
 
     def write(self, ideas: list[Idea]) -> list[Idea]:
         """Create a page for every idea not already present. Returns the ideas created."""
+        self.ensure_schema()
         existing = self.existing_keys()
         found_on = today_local()
         created: list[Idea] = []

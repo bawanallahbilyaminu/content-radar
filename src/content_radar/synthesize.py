@@ -3,8 +3,10 @@
 The model proposes; code enforces. After parsing, every idea is checked for:
 - sources that exist in the collected items and carry a justification,
 - the breaking rule (recent AND cross-source / KEV / big HN thread),
-- angle evidence (a "sourced" angle must cite a collected local item),
-- a score recomputed from the rubric breakdown with assumed angles capped,
+- angle evidence (a "sourced" angle must cite a collected local item; assumed angles
+  are capped, generic ones capped harder),
+- niche "other": zero local-angle points, must carry a demand signal, max one per run,
+- a score recomputed from the rubric breakdown,
 - the minimum score.
 """
 
@@ -78,9 +80,15 @@ class Context:
     items: dict[str, Item]
     clusters: dict[str, Cluster]
     local_sources: set[str]
+    demand_urls: set[str]  # canonical URLs the filter marked as demand evidence
 
     @classmethod
-    def from_clusters(cls, clusters: list[Cluster], local_sources: list[str]) -> Context:
+    def from_clusters(
+        cls,
+        clusters: list[Cluster],
+        local_sources: list[str],
+        notes: dict[str, FilterVerdict] | None = None,
+    ) -> Context:
         items: dict[str, Item] = {}
         by_url: dict[str, Cluster] = {}
         for cluster in clusters:
@@ -88,10 +96,27 @@ class Context:
                 key = canonical_url(str(item.url))
                 items.setdefault(key, item)
                 by_url.setdefault(key, cluster)
-        return cls(items=items, clusters=by_url, local_sources={s.lower() for s in local_sources})
+        demand = {canonical_url(u) for u, v in (notes or {}).items() if v.demand}
+        return cls(
+            items=items,
+            clusters=by_url,
+            local_sources={s.lower() for s in local_sources},
+            demand_urls=demand,
+        )
 
     def is_local(self, item: Item) -> bool:
         return "local" in item.niche_tags or item.source.lower() in self.local_sources
+
+    def has_demand_signal(self, cited: list[Item]) -> bool:
+        """A cited question item, a filter demand flag, or a cluster that carries a question."""
+        for item in cited:
+            key = canonical_url(str(item.url))
+            if item.kind == "question" or key in self.demand_urls:
+                return True
+            cluster = self.clusters.get(key)
+            if cluster and cluster.has_question:
+                return True
+        return False
 
 
 def clusters_payload(
@@ -135,6 +160,11 @@ def clusters_payload(
 
 def _clamp(value: int, high: int) -> int:
     return max(0, min(int(value), high))
+
+
+def is_generic_angle(angle: str, markers: list[str]) -> bool:
+    text = angle.lower()
+    return any(m.lower() in text for m in markers)
 
 
 def qualifies_breaking(cited: list[Item], ctx: Context, window_hours: int) -> bool:
@@ -181,7 +211,12 @@ def enforce(draft: IdeaDraft, ctx: Context, settings: Settings) -> tuple[Idea | 
         problems.append(f"'{short}': no justified source from the input; idea dropped")
         return None, problems
 
-    # 2. Angle evidence.
+    # 2. Niche "other" must rest on a demand signal, not just a fresh article.
+    if draft.niche == "other" and not ctx.has_demand_signal(cited_items):
+        problems.append(f"'{short}': niche 'other' without a demand signal; idea dropped")
+        return None, problems
+
+    # 3. Angle evidence.
     angle = draft.angle.strip()
     evidence = draft.angle_evidence
     angle_source: str | None = None
@@ -201,25 +236,43 @@ def enforce(draft: IdeaDraft, ctx: Context, settings: Settings) -> tuple[Idea | 
     else:
         evidence = "assumed"
 
-    # 3. Score from the breakdown; generic (assumed) angles cannot earn full local points.
+    # 4. Score from the breakdown with the local-angle caps.
     b = draft.score_breakdown
     local_points = _clamp(b.local_angle, 20)
-    if evidence == "none":
+    if evidence == "none" or draft.niche == "other":
         local_points = 0
     elif evidence == "assumed":
-        local_points = min(local_points, run.assumed_angle_max_points)
-    score = (
-        _clamp(b.timeliness, 25)
-        + _clamp(b.demand, 25)
-        + local_points
-        + _clamp(b.cross_source, 15)
-        + _clamp(b.effort, 15)
-    )
+        cap = run.assumed_angle_max_points
+        if is_generic_angle(angle, settings.niche.generic_angle_markers):
+            cap = run.generic_angle_max_points
+        local_points = min(local_points, cap)
+    breakdown = {
+        "timeliness": _clamp(b.timeliness, 25),
+        "demand": _clamp(b.demand, 25),
+        "local_angle": local_points,
+        "cross_source": _clamp(b.cross_source, 15),
+        "effort": _clamp(b.effort, 15),
+    }
+    score = sum(breakdown.values())
 
-    # 4. Breaking is earned, not declared.
+    # 5. Breaking is earned, not declared.
     breaking = draft.breaking and qualifies_breaking(cited_items, ctx, run.breaking_window_hours)
     if draft.breaking and not breaking:
         log.info("breaking flag removed from '%s': rule not met", short)
+
+    log.info(
+        "idea '%s': score %d = T%d D%d L%d(%s, model gave %d) X%d E%d; niche=%s",
+        short,
+        score,
+        breakdown["timeliness"],
+        breakdown["demand"],
+        breakdown["local_angle"],
+        evidence,
+        b.local_angle,
+        breakdown["cross_source"],
+        breakdown["effort"],
+        draft.niche,
+    )
 
     try:
         idea = Idea(
@@ -236,6 +289,7 @@ def enforce(draft: IdeaDraft, ctx: Context, settings: Settings) -> tuple[Idea | 
             sources=kept,
             source_notes=notes,
             score=score,
+            score_breakdown=breakdown,
             effort=draft.effort,
             evergreen=draft.evergreen,
             breaking=breaking,
@@ -244,6 +298,38 @@ def enforce(draft: IdeaDraft, ctx: Context, settings: Settings) -> tuple[Idea | 
         problems.append(f"'{short}': {exc.errors()[0].get('msg', 'invalid')}")
         return None, problems
     return idea, problems
+
+
+def select_final(ideas: list[Idea], settings: Settings) -> list[Idea]:
+    """Min score, dedupe, at most one niche-'other' idea, cap at max_ideas_per_run."""
+    run = settings.run
+    seen: set[str] = set()
+    others = 0
+    out: list[Idea] = []
+    for idea in sorted(ideas, key=lambda i: i.score, reverse=True):
+        if idea.score < run.min_idea_score:
+            log.info(
+                "idea '%s' below min score (%d < %d)",
+                idea.title[:50],
+                idea.score,
+                run.min_idea_score,
+            )
+            continue
+        key = idea.dedupe_key()
+        if key in seen:
+            continue
+        if idea.niche == "other":
+            if others >= run.max_other_ideas:
+                log.info(
+                    "idea '%s' dropped: only %d niche-other idea(s) per run",
+                    idea.title[:50],
+                    run.max_other_ideas,
+                )
+                continue
+            others += 1
+        seen.add(key)
+        out.append(idea)
+    return out[: run.max_ideas_per_run]
 
 
 def synthesize(
@@ -261,7 +347,7 @@ def synthesize(
     max_ideas = settings.run.max_ideas_per_run
     system = load_prompt("synthesize")
     user = clusters_payload(clusters, notes, max_ideas)
-    ctx = Context.from_clusters(clusters, settings.niche.local_sources)
+    ctx = Context.from_clusters(clusters, settings.niche.local_sources, notes)
 
     est_in = count_input_tokens(client, model, system, user)
     est_out = settings.budget.estimates.synthesize_output_tokens
@@ -304,7 +390,8 @@ def synthesize(
                 "Some ideas were invalid and dropped:\n- "
                 + "\n- ".join(dropped[:10])
                 + "\nReturn the full corrected list. Only cite URLs that appear in the input, "
-                "and give every source a justification."
+                "give every source a justification, and only use niche 'other' when a cited "
+                "item is a question or demand signal."
             )
             assistant_text = next(
                 (b.text for b in response.content if getattr(b, "type", "") == "text"), ""
@@ -315,17 +402,6 @@ def synthesize(
                 {"role": "user", "content": feedback},
             ]
 
-    min_score = settings.run.min_idea_score
-    seen: set[str] = set()
-    unique: list[Idea] = []
-    for idea in sorted(ideas, key=lambda i: i.score, reverse=True):
-        if idea.score < min_score:
-            log.info("idea '%s' below min score (%d < %d)", idea.title[:50], idea.score, min_score)
-            continue
-        key = idea.dedupe_key()
-        if key in seen:
-            continue
-        seen.add(key)
-        unique.append(idea)
-    log.info("synthesize: %d ideas returned, %d kept", len(ideas), len(unique[:max_ideas]))
-    return unique[:max_ideas]
+    final = select_final(ideas, settings)
+    log.info("synthesize: %d ideas returned, %d kept", len(ideas), len(final))
+    return final
