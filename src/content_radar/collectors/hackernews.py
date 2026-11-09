@@ -70,7 +70,9 @@ def _to_item(hit: dict) -> Item | None:
         return None
     hn_url = f"https://news.ycombinator.com/item?id={hit['objectID']}"
     url = hit.get("url") or hn_url
-    is_ask = "ask_hn" in (hit.get("_tags") or []) or title.lower().startswith("ask hn")
+    # Algolia tags every text-only self post as ask_hn (Tell HN, link-less stories), so
+    # only the title decides. The ask_hn query is kept for recall.
+    is_ask = title.lower().startswith("ask hn")
     created = parse_datetime(hit.get("created_at"))
     return Item(
         source="hackernews",

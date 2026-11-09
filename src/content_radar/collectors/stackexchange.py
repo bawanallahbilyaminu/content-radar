@@ -22,10 +22,15 @@ log = logging.getLogger(__name__)
 API = "https://api.stackexchange.com/2.3/questions"
 SITE_NICHE = {"stackoverflow": None, "datascience": "data", "security": "cyber", "ai": "ai_ml"}
 TAG_NICHE = {
-    "python": "data",
+    "pytorch": "ai_ml",
+    "huggingface-transformers": "ai_ml",
+    "large-language-model": "ai_ml",
+    "langchain": "ai_ml",
+    "scikit-learn": "ai_ml",
+    "ollama": "ai_ml",
     "pandas": "data",
-    "machine-learning": "ai_ml",
-    "llm": "ai_ml",
+    "polars": "data",
+    "powerbi": "data",
     "docker": "other",
 }
 

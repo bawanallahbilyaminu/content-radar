@@ -136,9 +136,9 @@ def test_stackexchange_questions(settings):
     assert "&quot;" not in items[0].title
     assert items[0].engagement["views"] > 0
     assert items == sorted(items, key=lambda i: i.engagement["score"], reverse=True)
-    # 5 stackoverflow tags + datascience + security + ai
-    assert len(calls) == 8
-    assert sum("tagged=" in c for c in calls) == 5
+    # 10 stackoverflow tags + datascience + security + ai
+    assert len(calls) == 13
+    assert sum("tagged=" in c for c in calls) == 10
     # small sites look back further than stackoverflow (720h vs 168h in config.yaml)
     assert fromdates["security"] < fromdates["stackoverflow"]
 
@@ -223,13 +223,7 @@ def test_hackernews_ask_hn_marked_as_question(settings):
     assert str(laptop.url) == "https://news.ycombinator.com/item?id=999"
     # off-niche Ask HN posts (C++ enjoyment, 'what are you working on') are dropped
     assert all("C++" not in i.title for i in items)
-    # anything Algolia tagged ask_hn is a question; keyword-search stories stay trends
-    assert all(i.kind == "question" for i in items if "ask_hn" in _tags_of(i, ask))
-    assert any(i.kind == "trend" for i in items)
-
-
-def _tags_of(item, ask_payload) -> list[str]:
-    for hit in ask_payload["hits"]:
-        if hit["title"] == item.title:
-            return hit.get("_tags", [])
-    return []
+    # Algolia tags link-less self posts as ask_hn too; only "Ask HN:" titles are questions
+    chatgpt = next(i for i in items if i.title.startswith("ChatGPT Desktop"))
+    assert chatgpt.kind == "trend"
+    assert all(i.kind == "trend" for i in items if i.title.startswith("Tell HN"))
