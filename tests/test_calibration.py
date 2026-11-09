@@ -90,7 +90,7 @@ def test_other_niche_needs_demand_and_is_capped_to_one(settings):
         Item(
             source="reddit:Nigeria",
             url="https://www.reddit.com/r/Nigeria/comments/x/how_do_i_cut_my_data_usage/",
-            title="How do I cut my phone data usage? Settings that influence mobile data use",
+            title="How do I cut data use? Smartphone settings influence mobile data consumption",
             kind="question",
             published_at=now_local(),
         )
