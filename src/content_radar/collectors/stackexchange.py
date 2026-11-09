@@ -36,17 +36,20 @@ def collect(settings: Settings, client: HttpClient) -> list[Item]:
     pagesize = int(cfg.get("pagesize", 30))
     min_score = int(cfg.get("min_score", 1))
     quota_floor = int(cfg.get("min_quota_remaining", 20))
-    fromdate = int(now_local().timestamp()) - lookback_hours * 3600
+    now_ts = int(now_local().timestamp())
 
-    queries: list[tuple[str, str | None]] = []
+    # (site, tag, fromdate, min_score): smaller sites get their own window and score floor.
+    queries: list[tuple[str, str | None, int, int]] = []
     for site_cfg in cfg.get("sites", []):
         site = site_cfg["site"]
         tags = site_cfg.get("tags") or [None]
-        queries.extend((site, tag) for tag in tags)
+        site_from = now_ts - int(site_cfg.get("lookback_hours", lookback_hours)) * 3600
+        site_min = int(site_cfg.get("min_score", min_score))
+        queries.extend((site, tag, site_from, site_min) for tag in tags)
 
     items: list[Item] = []
     seen: set[str] = set()
-    for site, tag in queries:
+    for site, tag, fromdate, site_min_score in queries:
         params: dict[str, str | int] = {
             "site": site,
             "sort": "votes",
@@ -69,7 +72,7 @@ def collect(settings: Settings, client: HttpClient) -> list[Item]:
             break
 
         for q in data.get("items", []):
-            if int(q.get("score") or 0) < min_score:
+            if int(q.get("score") or 0) < site_min_score:
                 continue
             item = _question_to_item(q, site, tag)
             if item is None or item.canonical in seen:

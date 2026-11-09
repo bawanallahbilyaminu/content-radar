@@ -226,13 +226,21 @@ sources:
     limit: 60                 # total after ranking by votes
     lookback_hours: 168       # questions need days to accumulate votes
     pagesize: 30
-    min_score: 1
+    min_score: 1              # default vote floor; small sites override below
     min_quota_remaining: 20   # stop early rather than exhaust the 300/day anonymous quota
     sites:
       - site: stackoverflow
         tags: [python, machine-learning, pandas, llm, docker]
+      # Low-traffic sites: a handful of questions a week, mostly 0 votes. Views still
+      # signal demand, so take everything from the last 30 days.
       - site: datascience
+        min_score: 0
+        lookback_hours: 720
       - site: security
+        min_score: 0
+        lookback_hours: 720
       - site: ai
+        min_score: 0
+        lookback_hours: 720
   youtube:
     enabled: false     # Phase 5

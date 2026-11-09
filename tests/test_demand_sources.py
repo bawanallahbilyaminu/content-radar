@@ -120,10 +120,12 @@ def test_stackexchange_questions(settings):
     data = load_json_fixture("se_questions.json")
     calls: list[str] = []
 
+    fromdates: dict[str, int] = {}
+
     def handler(request: httpx.Request) -> httpx.Response:
         calls.append(str(request.url))
         assert request.url.params["sort"] == "votes"
-        assert "fromdate" in request.url.params
+        fromdates[request.url.params["site"]] = int(request.url.params["fromdate"])
         return httpx.Response(200, json=data)
 
     client = HttpClient(user_agent="t", transport=httpx.MockTransport(handler))
@@ -137,6 +139,8 @@ def test_stackexchange_questions(settings):
     # 5 stackoverflow tags + datascience + security + ai
     assert len(calls) == 8
     assert sum("tagged=" in c for c in calls) == 5
+    # small sites look back further than stackoverflow (720h vs 168h in config.yaml)
+    assert fromdates["security"] < fromdates["stackoverflow"]
 
 
 def test_stackexchange_honours_backoff_and_quota_floor(settings):
