@@ -16,6 +16,7 @@ IdeaFormat = Literal["news", "tutorial", "explainer"]
 IdeaLength = Literal["short", "long"]
 Niche = Literal["ai_ml", "data", "cyber", "other"]
 Effort = Literal["low", "med", "high"]
+AngleEvidence = Literal["sourced", "assumed", "none"]
 
 _TRACKING_PARAMS = {
     "utm_source",
@@ -108,12 +109,20 @@ class Idea(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     hook: str = Field(description="First 3 seconds of the video")
     angle: str = Field(description="Nigeria / Africa angle, or 'none'")
+    angle_evidence: AngleEvidence = Field(
+        default="none",
+        description="sourced = cites a collected local item; assumed = plausible only",
+    )
+    angle_source: HttpUrl | None = Field(default=None, description="local item backing the angle")
     format: IdeaFormat
     length: IdeaLength
     niche: Niche
     why_now: str
     demand_signal: str
     sources: list[HttpUrl] = Field(min_length=1)
+    source_notes: dict[str, str] = Field(
+        default_factory=dict, description="url -> short phrase: the claim that source supports"
+    )
     score: int = Field(ge=0, le=100)
     effort: Effort
     evergreen: bool = False

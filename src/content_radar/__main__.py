@@ -65,6 +65,8 @@ def main(argv: list[str] | None = None) -> int:
             print(result.llm_summary, file=sys.stderr)
         if result.skipped_reason:
             print(f"SKIPPED: {result.skipped_reason}", file=sys.stderr)
+        if not args.dry_run and not args.no_sink:
+            print(f"notion: {result.written} new row(s) written", file=sys.stderr)
         if args.dry_run:
             show_items = args.items or not result.ideas
             records = result.items if show_items else result.ideas

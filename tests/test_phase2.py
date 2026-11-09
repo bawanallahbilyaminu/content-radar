@@ -15,7 +15,13 @@ from content_radar.filter import FilterBatch, FilterVerdict, filter_items
 from content_radar.llm import BudgetExceeded, UsageTracker, check_budget, price_usd
 from content_radar.models import Item
 from content_radar.scoring import cluster_items, item_score, rank_clusters
-from content_radar.synthesize import IdeaBatch, IdeaDraft, synthesize
+from content_radar.synthesize import (
+    IdeaBatch,
+    IdeaDraft,
+    ScoreBreakdown,
+    SourceCitation,
+    synthesize,
+)
 from content_radar.timeutil import now_local
 
 
@@ -207,18 +213,35 @@ def test_filter_skips_everything_when_budget_too_small(settings):
 # --- synthesize -----------------------------------------------------------------
 
 
+def _breakdown(score: int) -> ScoreBreakdown:
+    # Spread a target score over the rubric with the local angle at 0 (angle 'none').
+    t = min(25, score)
+    d = min(25, score - t)
+    c = min(15, score - t - d)
+    e = min(15, score - t - d - c)
+    return ScoreBreakdown(timeliness=t, demand=d, local_angle=0, cross_source=c, effort=e)
+
+
 def _draft(title, sources, score=80, **kw) -> IdeaDraft:
+    cits = [
+        s
+        if isinstance(s, SourceCitation)
+        else SourceCitation(url=s, supports="backs the main claim")
+        for s in sources
+    ]
     base = dict(
         title=title,
         hook="Hook.",
         angle="none",
+        angle_evidence="none",
+        angle_source=None,
         format="news",
         length="short",
         niche="ai_ml",
         why_now="now",
         demand_signal="signal",
-        sources=sources,
-        score=score,
+        sources=cits,
+        score_breakdown=_breakdown(score),
         effort="low",
         evergreen=False,
         breaking=False,
@@ -266,6 +289,7 @@ def test_synthesize_caps_and_orders_by_score(settings):
         ]
     )
     ideas = synthesize(clusters, {}, settings, _fake([batch]), UsageTracker(settings))
+    # Low (40) is dropped by min_idea_score=55; the cap of 2 keeps High and Mid, best first.
     assert [i.title for i in ideas] == ["High", "Mid"]
 
 

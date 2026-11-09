@@ -16,6 +16,7 @@ from content_radar.llm import BudgetExceeded, ModelClient, UsageTracker, make_cl
 from content_radar.models import Idea, Item
 from content_radar.normalize import Tagger, dedupe, within_lookback
 from content_radar.scoring import item_score, rank_clusters
+from content_radar.sinks.notion import NotionSink, make_sink
 from content_radar.synthesize import synthesize
 
 log = logging.getLogger(__name__)
@@ -31,6 +32,7 @@ class RunResult:
     dropped_duplicate: int = 0
     llm_summary: str = ""
     skipped_reason: str = ""
+    written: int = 0
 
     def summary(self) -> str:
         lines = ["source            raw  kept"]
@@ -94,6 +96,7 @@ def run(
     skip_llm: bool = False,
     transport: httpx.BaseTransport | None = None,
     client: ModelClient | None = None,
+    notion: NotionSink | None = None,
 ) -> RunResult:
     """Full daily run: collect -> score -> filter -> synthesize (-> sink in Phase 3).
     --dry-run still runs the LLM steps (that is what we want to judge) but writes nothing."""
@@ -109,8 +112,23 @@ def run(
     if dry_run:
         log.info("dry run: nothing written")
         return result
-    # Phase 3: if sink: write result.ideas to Notion
-    _ = sink
+    if not sink:
+        log.info("--no-sink: ideas not written")
+        return result
+    if not result.ideas:
+        log.info("no ideas to write")
+        return result
+    if notion is None:
+        token, db_id = settings.secrets.notion_token, settings.secrets.notion_ideas_db_id
+        if not token or not db_id:
+            result.skipped_reason = (
+                "NOTION_TOKEN / NOTION_IDEAS_DB_ID not set; ideas were not written "
+                "(run scripts/create_notion_db.py first)"
+            )
+            log.warning(result.skipped_reason)
+            return result
+        notion = make_sink(token, db_id)
+    result.written = len(notion.write(result.ideas))
     return result
 
 

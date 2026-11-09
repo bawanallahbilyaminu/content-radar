@@ -22,6 +22,9 @@ class RunConfig(BaseModel):
     timezone: str = "Africa/Lagos"
     user_agent: str = "content-radar/0.1 (+https://github.com/bawanallahbilyaminu/content-radar)"
     http_timeout_seconds: float = 20.0
+    min_idea_score: int = 55
+    breaking_window_hours: int = 48
+    assumed_angle_max_points: int = 6
 
 
 class ModelsConfig(BaseModel):
@@ -66,6 +69,7 @@ class NicheConfig(BaseModel):
     local_keywords: list[str] = Field(default_factory=list)
     question_markers: list[str] = Field(default_factory=list)
     question_sources: list[str] = Field(default_factory=lambda: ["reddit", "hackernews"])
+    local_sources: list[str] = Field(default_factory=list)
 
 
 class SourceConfig(BaseModel):
@@ -89,6 +93,7 @@ class Secrets(BaseModel):
     github_token: str | None = None
     notion_token: str | None = None
     notion_ideas_db_id: str | None = None
+    notion_parent_page_id: str | None = None
     youtube_api_key: str | None = None
     stackexchange_key: str | None = None
 
@@ -106,6 +111,7 @@ class Secrets(BaseModel):
             github_token=get("GITHUB_TOKEN"),
             notion_token=get("NOTION_TOKEN"),
             notion_ideas_db_id=get("NOTION_IDEAS_DB_ID"),
+            notion_parent_page_id=get("NOTION_PARENT_PAGE_ID"),
             youtube_api_key=get("YOUTUBE_API_KEY"),
             stackexchange_key=get("STACKEXCHANGE_KEY"),
         )
