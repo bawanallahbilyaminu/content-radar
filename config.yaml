@@ -224,13 +224,14 @@ sources:
   stackexchange:
     enabled: true
     limit: 60                 # total after ranking by votes
-    lookback_hours: 168       # questions need days to accumulate votes
+    lookback_hours: 720       # pipeline window for the whole source; sites narrow it below
     pagesize: 30
     min_score: 1              # default vote floor; small sites override below
     min_quota_remaining: 20   # stop early rather than exhaust the 300/day anonymous quota
     sites:
       - site: stackoverflow
         tags: [python, machine-learning, pandas, llm, docker]
+        lookback_hours: 168   # high traffic: last week is plenty
       # Low-traffic sites: a handful of questions a week, mostly 0 votes. Views still
       # signal demand, so take everything from the last 30 days.
       - site: datascience
