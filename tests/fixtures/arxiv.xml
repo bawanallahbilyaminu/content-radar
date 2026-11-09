@@ -1,0 +1,141 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/jaNu6LNxRm4VQ5so0ZA65ehb0/4</id>
+  <title>arXiv Query: search_query=cat:cs.AI OR cat:cs.CR&amp;id_list=&amp;start=0&amp;max_results=4</title>
+  <updated>2026-11-09T13:30:06Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=cat:cs.AI+OR+cat:cs.CR&amp;start=0&amp;max_results=4&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>4</opensearch:itemsPerPage>
+  <opensearch:totalResults>256973</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2611.09892v1</id>
+    <title>On Agentic Manipulation Policies</title>
+    <updated>2026-11-06T18:59:34Z</updated>
+    <link href="https://arxiv.org/abs/2611.09892v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2611.09892v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Recent work on robot manipulation has focused on specialist policies trained on demonstrations. We show that generalist AI models can control manipulators more reliably than specialist policies such as vision-language-action models (VLAs) and world-action models (WAMs). We systematically analyze agentic manipulation policies (AMPs), in which a generalist AI model commands the manipulator directly, adapting its actions as the task unfolds. We present AMP1, a reference harness that runs unchanged across single-arm, bimanual, and mobile manipulation. AMP1 achieves state-of-the-art results on the RoboLab-120 and CaP-Gym benchmarks, with no demonstrations or task-specific training. On RoboLab-120, AMP1 reaches an 85.6\% success rate zero-shot, compared to 49.2\% and 42.9\% for leading VLA and WAM policies. The agent succeeds zero-shot in 104 of 108 real-world trials spanning twelve tasks and three robot instances, reducing failure rates by 20x and 15x relative to strong VLA and WAM baselines. The basic harness supplies no grasping, pushing, or placing skills; the agent develops its own strategies, such as searching for hidden objects, using objects as tools, and calibrating its cameras. With the addition of a persistent memory store, the agent can also learn from experience: an augmented harness with a memory representation that is carried across episodes lowers the failure rate on RoboDojo bimanual manipulation tasks by 4.6x relative to zero-shot deployment. Our analysis suggests that AMPs are substantially more general and robust than specialist manipulation policies, providing a promising foundation for robot manipulation.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-11-06T18:59:34Z</published>
+    <arxiv:comment>Videos and code available at: https://apple-aiml-research.github.io/ml-amp/</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Chen Chen</name>
+    </author>
+    <author>
+      <name>Omid Bagherieh</name>
+    </author>
+    <author>
+      <name>Naveen Nikamanth Appiah Balaji</name>
+    </author>
+    <author>
+      <name>Jesse T. Gonzalez</name>
+    </author>
+    <author>
+      <name>Negin Heravi</name>
+    </author>
+    <author>
+      <name>Fahad Islam</name>
+    </author>
+    <author>
+      <name>Xueting Li</name>
+    </author>
+    <author>
+      <name>Jean-Baptiste Regli</name>
+    </author>
+    <author>
+      <name>Kejia Ren</name>
+    </author>
+    <author>
+      <name>Petr Švec</name>
+    </author>
+    <author>
+      <name>David J. Yoon</name>
+    </author>
+    <author>
+      <name>Matthias Müller</name>
+    </author>
+    <author>
+      <name>Vladlen Koltun</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2611.09891v1</id>
+    <title>CPU-ARC: Agentic Reasoning Caching for on-CPU Reasoning Reuse</title>
+    <updated>2026-11-06T18:58:50Z</updated>
+    <link href="https://arxiv.org/abs/2611.09891v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2611.09891v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models reinvent the wheel all the time. They conflate task-solving with the execution of the solutions, which forces them to solve every problem from scratch. We show that once a task has been reasoned through, the application of its solution to a new problem instance can be done very efficiently and with little involvement from language models. We introduce agentic reasoning caching, a method for constructing robust CPU-executable agentic reasoning caches (ARCs) from LLM reasoning traces. ARCs show on-par performance with frontier LLMs across a range of difficult mathematical and scientific tasks, are fully explainable, continually trainable, robust to input perturbations, and 16-291x cheaper to invoke than the source model.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-11-06T18:58:50Z</published>
+    <arxiv:comment>Tech report. 28 pages, 9 figures, 11 tables</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Peter Belcak</name>
+    </author>
+    <author>
+      <name>Greg Heinrich</name>
+    </author>
+    <author>
+      <name>Saurav Muralidharan</name>
+    </author>
+    <author>
+      <name>Shizhe Diao</name>
+    </author>
+    <author>
+      <name>Pavlo Molchanov</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2611.09889v1</id>
+    <title>SciCheck: A Framework for Verifying the Integrity of Deep Learning Training</title>
+    <updated>2026-11-06T18:58:38Z</updated>
+    <link href="https://arxiv.org/abs/2611.09889v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2611.09889v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Deep learning training is difficult to verify within a scientific workflow: its architecture, hyperparameters, and procedure are rarely fixed until training has been attempted, and two honest runs never produce the same weights, so recomputation cannot serve as a check. We present SciCheck, a framework in which the scientist explores training configurations freely and posts a blueprint to a provenance ledger for each candidate they want verified, and a verifying scientist judges the resulting run in two layers: a statistical judge model that compares per-step gradient statistics against the verifier's own reference run, and a spot-check that re-executes randomly chosen training segments whose checkpoints are committed to the ledger one epoch at a time. On an MLP, a CNN, and an autoencoder at 100k-500k parameters, under gradient sign flipping, label poisoning, and fabricated runs, SciCheck reaches F1 of 0.966, 0.906, and 0.976 while rejecting 0-4.4% of honest runs. For the attacks we test, the spot-check accounts for most of this accuracy, and we characterize what each layer can detect. The effective-signal statistic falls as $(1-2s)^2$ under a sign flip of severity $s$, so gradient statistics alone catch strong enough sign flips, while fabricated runs that replay genuine statistics look no more anomalous than honest runs to any statistical detector we test. The spot-check catches fully fabricated segments with probability at least $1-(1-s)^k$ for $k$ sampled segments when the draws stay hidden until the run is committed, which roughly matches our measurements and lets a verifier choose $k$ for a target soundness. Verification costs 1.5-2.3x one retraining, mostly for the verifier's reference run; each submission's spot-check takes under 1.5 s, and per-epoch commitments reduce checkpoint storage 5-17x compared with keeping every checkpoint.</summary>
+    <category term="cs.CR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-11-06T18:58:38Z</published>
+    <arxiv:comment>10 pages, 3 figures, 6 tables</arxiv:comment>
+    <arxiv:primary_category term="cs.CR"/>
+    <author>
+      <name>Alexander Nguyen</name>
+    </author>
+    <author>
+      <name>Dylan Gresham</name>
+    </author>
+    <author>
+      <name>Gaby G. Dagher</name>
+    </author>
+    <author>
+      <name>Min Long</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2611.09879v1</id>
+    <title>PhotoFinish: Portable Timerless Probing of Microarchitectural Latencies</title>
+    <updated>2026-11-06T18:54:16Z</updated>
+    <link href="https://arxiv.org/abs/2611.09879v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2611.09879v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Timing measurements are a fundamental building block of microarchitectural attacks, enabling software to convert otherwise invisible latency differences into architectural observations. Thus, restricting high-resolution timers is a common defense, especially in constrained environments such as web browsers. Timerless probing primitives provide an alternative approach. Instead of reading or constructing a timer, they observe architectural events that correlate with the microarchitectural state. However, such primitives typically rely on platform-specific behavior, and none generalizes across the wider computing landscape. In this paper, we present PhotoFinish, a portable timerless probing primitive that converts latency differences directly into an architectural value. PhotoFinish races an operation under test against a fixed reference in two parallel threads that then write unique values to the same shared location, resulting in a latency-dependent architectural value. PhotoFinish only requires parallel execution and shared memory, without constructing or reading a clock. We evaluate PhotoFinish on 38 CPUs spanning four ISAs and demonstrate reliable cache state classification across widely different microarchitectures, with comparable fidelity when compiled to WebAssembly and executed inside a browser. We further use PhotoFinish in AES T-table and Evict+Reload attacks, show that it applies beyond caches to TLB and execution-engine latencies, and demonstrate sufficient precision to identify the LLC slice of an address. Our results demonstrate shared-memory races as a generic and precise replacement for explicit timing, showing that restricting timers alone does not prevent software from observing fine-grained microarchitectural latency differences.</summary>
+    <category term="cs.CR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-11-06T18:54:16Z</published>
+    <arxiv:primary_category term="cs.CR"/>
+    <author>
+      <name>Tristan Hornetz</name>
+    </author>
+    <author>
+      <name>Eduard Ebert</name>
+    </author>
+    <author>
+      <name>Lorenz Hetterich</name>
+    </author>
+    <author>
+      <name>Lukas Gerlach</name>
+    </author>
+    <author>
+      <name>Michael Schwarz</name>
+    </author>
+  </entry>
+</feed>
