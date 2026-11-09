@@ -28,8 +28,11 @@ tagged list of `Item`s from every source without any LLM calls.
 4. **Collectors**, one module each, each with a recorded fixture in
    `tests/fixtures/` and a unit test:
    - `hackernews.py` — Algolia `search_by_date` with niche keywords, last 48h.
-   - `reddit.py` — PRAW script app; hot + new per subreddit; posts with a `?`
+   - `reddit.py` — **built last**, after a dry run of the keyless collectors
+     is reviewed. PRAW script app; hot + new per subreddit; posts with a `?`
      title or "how do I / help / confused" phrasing tagged `kind="question"`.
+     Fallback when OAuth creds are missing or API approval is slow: public
+     subreddit RSS feeds (`/r/<sub>/new/.rss`) through the RSS collector.
    - `github.py` — Search API, repos created in the last 7 days sorted by
      stars, filtered to niche topics.
    - `huggingface.py` — trending models API and daily papers page JSON.
@@ -64,8 +67,10 @@ Goal: the dry run prints up to 7 validated `Idea` objects with scores.
    flag, local-angle keyword hit. Cluster items by normalized title tokens and
    shared URLs; **cross-source count** is the strongest cluster signal.
    Output: ranked clusters with a numeric pre-score.
-2. **`prompts/filter.md`** — Haiku pass over the top ~60 items: tag niche,
-   drop off-topic, flag obvious local angle. JSON out, pydantic-validated.
+2. **`prompts/filter.md`** — Haiku pass over the top items, **batched ~50
+   items per call** (never one call per item): tag niche, drop off-topic,
+   flag obvious local angle. JSON out, pydantic-validated. Log the number of
+   calls and tokens used.
 3. **`prompts/synthesize.md`** — Sonnet pass over the top clusters. Carries
    the rubric verbatim (timeliness 25, demand 25, local angle 20, cross-source
    15, effort 15), the "angle is the edge" rule, the max-7 cap, the `breaking`
