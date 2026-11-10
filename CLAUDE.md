@@ -108,8 +108,8 @@ never invent sources.
   create it under a parent page ID given by the user.
 
 ## Scheduling
-GitHub Actions (`.github/workflows/daily.yml`): cron daily at **06:00 Africa/Lagos
-(05:00 UTC)**, plus `workflow_dispatch` for manual runs. Secrets come from GitHub
+GitHub Actions (`.github/workflows/daily.yml`): cron daily at **05:23 Africa/Lagos
+(04:23 UTC)**, off the top of the hour so GitHub does not skip it; ideas are ready by 06:00, plus `workflow_dispatch` for manual runs. Secrets come from GitHub
 repo secrets. Dedupe state lives in Notion, so the workflow doesn't need to commit
 files back to the repo.
 

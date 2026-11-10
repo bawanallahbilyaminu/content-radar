@@ -2,8 +2,10 @@ name: Daily research run
 
 on:
   schedule:
-    # 06:00 Africa/Lagos = 05:00 UTC (WAT has no daylight saving)
-    - cron: "0 5 * * *"
+    # 05:23 Africa/Lagos = 04:23 UTC (WAT has no daylight saving). Off the top of the
+    # hour because GitHub drops/delays on-the-hour schedules under load; ideas are
+    # ready before 06:00 Lagos even if the run starts late.
+    - cron: "23 4 * * *"
   workflow_dispatch:
     inputs:
       dry_run:

@@ -153,7 +153,9 @@ Exchange sites and tags, RSS feeds, and model names. Secrets only ever come from
 
 ## Schedule (GitHub Actions)
 
-`.github/workflows/daily.yml` runs every day at **06:00 Africa/Lagos (05:00 UTC)**
+`.github/workflows/daily.yml` runs every day at **05:23 Africa/Lagos (04:23 UTC)**,
+so ideas are ready by 06:00. It is off the top of the hour because GitHub delays or
+drops on-the-hour schedules under load. It runs
 on an Ubuntu runner: `uv sync --frozen`, then `python -m content_radar run`. The
 run log is uploaded as an artifact (14 days). A concurrency group stops two runs
 from overlapping. Dedupe state lives in Notion, so the workflow never commits back

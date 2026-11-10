@@ -135,7 +135,8 @@ or row count.
 
 ## Phase 4 — Schedule and docs ✅
 
-Done 2026-11-09: `daily.yml` (05:00 UTC cron + manual inputs dry_run / sources,
+Done 2026-11-09: `daily.yml` (cron moved to 04:23 UTC on 2026-11-10 after GitHub skipped
+the first on-the-hour 05:00 slot + manual inputs dry_run / sources,
 concurrency group, log artifact) and `ci.yml` (ruff + pytest on push/PR). Repo
 secrets are listed in the README; the first scheduled run needs them set.
 
