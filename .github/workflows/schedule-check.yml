@@ -1,0 +1,15 @@
+name: Schedule check (temporary)
+
+# Temporary: proves GitHub's scheduler fires on this repo. Delete once a scheduled run shows up.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: echo "scheduled event fired at $(date -u)"
