@@ -161,6 +161,29 @@ run log is uploaded as an artifact (14 days). A concurrency group stops two runs
 from overlapping. Dedupe state lives in Notion, so the workflow never commits back
 to the repo. `.github/workflows/ci.yml` runs ruff and pytest on every push and PR.
 
+### External trigger (cron-job.org)
+
+GitHub's scheduler has never fired on this repo: a `*/10 * * * *` test workflow
+produced zero runs in 5 hours on 2026-11-11, while manual runs work. So the daily
+run is also started from outside by a cron-job.org job at 05:23 Africa/Lagos. It
+makes the same API call as `gh workflow run daily.yml`:
+
+```
+POST https://api.github.com/repos/bawanallahbilyaminu/content-radar/actions/workflows/daily.yml/dispatches
+Authorization: Bearer <fine-grained token: this repo only, Actions read/write>
+Accept: application/vnd.github+json
+X-GitHub-Api-Version: 2022-11-28
+Content-Type: application/json
+
+{"ref":"main"}
+```
+
+GitHub answers `204 No Content` on success. The token lives only in cron-job.org,
+never in this repo. When it expires the morning run stops, so renew it before then.
+If GitHub's own cron starts working too, both triggers run. The concurrency group
+stops them overlapping, and the Notion sink skips ideas whose URLs are already used,
+so the second run adds no duplicate rows.
+
 ### Repo secrets
 
 Settings -> Secrets and variables -> Actions, or from a terminal with the GitHub

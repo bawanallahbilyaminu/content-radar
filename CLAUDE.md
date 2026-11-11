@@ -109,7 +109,7 @@ never invent sources.
 
 ## Scheduling
 GitHub Actions (`.github/workflows/daily.yml`): cron daily at **05:23 Africa/Lagos
-(04:23 UTC)**, off the top of the hour so GitHub does not skip it; ideas are ready by 06:00, plus `workflow_dispatch` for manual runs. Secrets come from GitHub
+(04:23 UTC)**, off the top of the hour so GitHub does not skip it; ideas are ready by 06:00, plus `workflow_dispatch` for manual runs. GitHub's scheduler has never fired on this repo, so a cron-job.org job also calls the `workflow_dispatch` API at 05:23 Lagos (see README, "External trigger"). Secrets come from GitHub
 repo secrets. Dedupe state lives in Notion, so the workflow doesn't need to commit
 files back to the repo.
 
