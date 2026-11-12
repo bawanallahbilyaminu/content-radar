@@ -1,0 +1,8 @@
+{
+  "total_count": 2,
+  "incomplete_results": false,
+  "items": [
+    {"full_name": "newco/agent-kit", "description": "Build agents in 20 lines", "language": "TypeScript", "stargazers_count": 2100, "forks_count": 90},
+    {"full_name": "devtools/fastlint", "description": "Lint any repo in under a second", "language": "Rust", "stargazers_count": 980, "forks_count": 31}
+  ]
+}

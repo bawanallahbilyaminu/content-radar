@@ -91,6 +91,63 @@ class SourceConfig(BaseModel):
         return extra.get(key, default)
 
 
+class ScoutFlagsConfig(BaseModel):
+    """Cheap risk signals. A flag never hides a repo unless it is in exclude_flags."""
+
+    lure_words: list[str] = Field(
+        default_factory=lambda: [
+            "crack",
+            "cracked",
+            "keygen",
+            "cheat",
+            "aimbot",
+            "free robux",
+            "free v-bucks",
+            "license key",
+            "activator",
+            "unlocker",
+        ]
+    )
+    min_fork_ratio: float = 0.01  # forks / stars below this on a big repo looks star-farmed
+    fork_check_min_stars: int = 300
+    new_repo_days: int = 14
+
+
+class ScoutWeights(BaseModel):
+    """Momentum = week + today + streak parts, out of 100."""
+
+    week: int = 50
+    today: int = 20
+    streak: int = 30
+    streak_cap_days: int = 7
+
+
+class ScoutConfig(BaseModel):
+    """Worth the Clone? repo scout. See src/content_radar/scout/."""
+
+    enabled: bool = True
+    sources: list[str] = Field(
+        default_factory=lambda: [
+            "trending_daily",
+            "trending_weekly",
+            "ossinsight_day",
+            "ossinsight_week",
+            "search",
+        ]
+    )
+    trending_languages: list[str] = Field(
+        default_factory=list, description="github.com/trending/<lang> pages; empty = all"
+    )
+    search_created_within_days: int = 7
+    search_min_stars: int = 100
+    enrich_top: int = 40
+    max_rows_per_run: int = 30
+    exclude_flags: list[str] = Field(default_factory=lambda: ["list"])
+    request_pause_seconds: float = 1.0
+    flags: ScoutFlagsConfig = Field(default_factory=ScoutFlagsConfig)
+    weights: ScoutWeights = Field(default_factory=ScoutWeights)
+
+
 class Secrets(BaseModel):
     anthropic_api_key: str | None = None
     reddit_client_id: str | None = None
@@ -99,6 +156,7 @@ class Secrets(BaseModel):
     github_token: str | None = None
     notion_token: str | None = None
     notion_ideas_db_id: str | None = None
+    notion_repos_db_id: str | None = None
     notion_parent_page_id: str | None = None
     youtube_api_key: str | None = None
     stackexchange_key: str | None = None
@@ -117,6 +175,7 @@ class Secrets(BaseModel):
             github_token=get("GITHUB_TOKEN"),
             notion_token=get("NOTION_TOKEN"),
             notion_ideas_db_id=get("NOTION_IDEAS_DB_ID"),
+            notion_repos_db_id=get("NOTION_REPOS_DB_ID"),
             notion_parent_page_id=get("NOTION_PARENT_PAGE_ID"),
             youtube_api_key=get("YOUTUBE_API_KEY"),
             stackexchange_key=get("STACKEXCHANGE_KEY"),
@@ -130,6 +189,7 @@ class Settings(BaseModel):
     budget: BudgetConfig = Field(default_factory=BudgetConfig)
     niche: NicheConfig = Field(default_factory=NicheConfig)
     sources: dict[str, SourceConfig] = Field(default_factory=dict)
+    scout: ScoutConfig = Field(default_factory=ScoutConfig)
     secrets: Secrets = Field(default_factory=Secrets)
 
     def source(self, name: str) -> SourceConfig:
