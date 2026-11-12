@@ -1,4 +1,5 @@
-"""CLI: python -m content_radar run [--dry-run] [--sources hn,reddit] [--no-sink]."""
+"""CLI: python -m content_radar run [--dry-run] [--sources hn,reddit] [--no-sink]
+python -m content_radar scout [--dry-run] [--no-sink] [--sources ...]."""
 
 from __future__ import annotations
 
@@ -8,7 +9,7 @@ import logging
 import sys
 from pathlib import Path
 
-from content_radar.config import load_settings
+from content_radar.config import Settings, load_settings
 from content_radar.pipeline import run
 
 
@@ -35,7 +36,34 @@ def build_parser() -> argparse.ArgumentParser:
     run_p.add_argument(
         "--items", action="store_true", help="in dry run, print collected items instead of ideas"
     )
+    scout_p = sub.add_parser(
+        "scout", help="Worth the Clone? repo scout: trending repos to the Notion repos table"
+    )
+    scout_p.add_argument(
+        "--dry-run", action="store_true", help="print ranked repos as JSON, write nothing"
+    )
+    scout_p.add_argument("--no-sink", action="store_true", help="skip writing to Notion")
+    scout_p.add_argument(
+        "--sources", default=None, help="comma-separated subset, e.g. trending_weekly,search"
+    )
+    scout_p.add_argument("--limit", type=int, default=None, help="print at most N repos (dry run)")
     return parser
+
+
+def _run_scout(args: argparse.Namespace, settings: Settings) -> int:
+    from content_radar.scout.run import run_scout
+
+    sources = [s.strip() for s in args.sources.split(",")] if args.sources else None
+    result = run_scout(settings, dry_run=args.dry_run, sink=not args.no_sink, sources=sources)
+    print(result.summary(), file=sys.stderr)
+    if result.skipped_reason:
+        print(f"SKIPPED: {result.skipped_reason}", file=sys.stderr)
+    if not args.dry_run and not args.no_sink and not result.skipped_reason:
+        print(f"notion repos: {result.created} created, {result.updated} updated", file=sys.stderr)
+    if args.dry_run:
+        repos = result.repos[: args.limit] if args.limit else result.repos
+        print(json.dumps([r.model_dump(mode="json") for r in repos], indent=2))
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -74,6 +102,8 @@ def main(argv: list[str] | None = None) -> int:
                 records = records[: args.limit]
             print(json.dumps([r.model_dump(mode="json") for r in records], indent=2))
         return 0
+    if args.command == "scout":
+        return _run_scout(args, settings)
     return 1
 
 

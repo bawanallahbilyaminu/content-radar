@@ -301,3 +301,30 @@ sources:
         lookback_hours: 720
   youtube:
     enabled: false     # Phase 5
+
+# Worth the Clone? repo scout (python -m content_radar scout). Separate from the ideas
+# run: no LLM calls, writes to its own Notion database (NOTION_REPOS_DB_ID).
+scout:
+  enabled: true
+  sources:                  # trending_* scrape github.com/trending (no API exists)
+    - trending_daily
+    - trending_weekly
+    - ossinsight_day        # OSS Insight trends API, stars gained in the last 24 h
+    - ossinsight_week       # ... and in the last 7 days
+    - search                # GitHub Search: repos created this week, by stars
+  trending_languages: []    # e.g. [python, typescript]; empty = the all-languages page
+  search_created_within_days: 7
+  search_min_stars: 100
+  enrich_top: 40            # GitHub REST lookups for licence, dates, topics
+  max_rows_per_run: 30      # rows written or refreshed in Notion per run
+  exclude_flags: [list]     # awesome-lists etc. are not tools to run
+  request_pause_seconds: 1.0
+  flags:
+    min_fork_ratio: 0.01    # forks/stars below this on a 300+ star repo -> low-forks
+    fork_check_min_stars: 300
+    new_repo_days: 14
+  weights:                  # momentum out of 100
+    week: 50                # rank of stars gained this week
+    today: 20               # rank of stars gained today
+    streak: 30              # consecutive days trending, capped below
+    streak_cap_days: 7

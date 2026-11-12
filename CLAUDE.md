@@ -68,6 +68,8 @@ limit is 10,000. Cache results and keep searches to ~20/day max.
 **Out of scope (do not build):** scraping X, TikTok or Instagram. Their terms forbid
 it and they block scrapers, so it would be fragile. If a source needs scraping
 HTML, prefer an RSS feed or official API instead and ask before scraping.
+Approved exception (2026-11-12): the repo scout scrapes github.com/trending, which
+has no API (see README, "Repo scout").
 
 ## Data models (pydantic)
 - **Item:** `source, url, title, summary, published_at, engagement (dict), kind

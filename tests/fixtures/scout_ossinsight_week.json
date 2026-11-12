@@ -1,0 +1,20 @@
+{
+  "type": "sql_endpoint",
+  "data": {
+    "columns": [
+      {"col": "repo_id", "data_type": "INT", "nullable": true},
+      {"col": "repo_name", "data_type": "VARCHAR", "nullable": true},
+      {"col": "primary_language", "data_type": "VARCHAR", "nullable": true},
+      {"col": "description", "data_type": "VARCHAR", "nullable": true},
+      {"col": "stars", "data_type": "DECIMAL", "nullable": true},
+      {"col": "forks", "data_type": "DECIMAL", "nullable": true},
+      {"col": "total_score", "data_type": "DOUBLE", "nullable": true}
+    ],
+    "rows": [
+      {"repo_id": "1001", "repo_name": "acme/quickvec", "primary_language": "Python", "description": "A tiny vector database", "stars": "3350", "forks": "120", "total_score": "4100.5"},
+      {"repo_id": "1002", "repo_name": "orbit/termdash", "primary_language": "Go", "description": "Dashboards in your terminal", "stars": "1440", "forks": "45", "total_score": "1800.1"},
+      {"repo_id": "1003", "repo_name": "", "primary_language": null, "description": null, "stars": "10", "forks": "0", "total_score": "1"}
+    ],
+    "result": {"code": 0, "message": "Query OK!", "row_count": 3}
+  }
+}

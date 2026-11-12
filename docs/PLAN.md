@@ -158,6 +158,15 @@ the Actions tab.
 
 ---
 
+## Repo scout (Worth the Clone?) — added
+
+A separate `scout` command for the Worth the Clone? series: trending repos from
+github.com/trending, OSS Insight and GitHub Search, ranked by momentum, flagged for
+risk and upserted into their own Notion database (`NOTION_REPOS_DB_ID`). No LLM
+calls. Runs as a second step of `daily.yml`. See README, "Repo scout".
+
+---
+
 ## Phase 5 — Later
 
 - **YouTube Data API v3 collector** — niche keyword search,

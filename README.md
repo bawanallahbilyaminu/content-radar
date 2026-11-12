@@ -49,6 +49,7 @@ Copy `.env.example` to `.env`. Nothing in Phase 1 strictly requires a key.
 | `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` | Reddit collector | App-only (client_credentials) read-only OAuth, no username or password. Create a **script** app at reddit.com/prefs/apps. When missing or refused, the collector falls back to public subreddit Atom feeds. |
 | `STACKEXCHANGE_KEY` | Stack Exchange collector | Optional. Raises quota from 300 to 10,000 requests/day. Register at stackapps.com. |
 | `NOTION_TOKEN`, `NOTION_IDEAS_DB_ID` | Phase 3 sink | Internal integration token and the Ideas database ID. |
+| `NOTION_REPOS_DB_ID` | Repo scout | The Worth the Clone? trending repos database (see "Repo scout"). |
 | `YOUTUBE_API_KEY` | Phase 5 | YouTube Data API v3. |
 
 ## Sources
@@ -137,6 +138,58 @@ existing rows by normalized title plus primary source URL and never edits or del
 a row, so anything a human changes stays changed. `--no-sink` skips it; `--dry-run`
 never writes.
 
+## Repo scout (Worth the Clone?)
+
+A second, separate job for the **Worth the Clone?** series: every day it finds the
+trending GitHub repos, ranks them by momentum, flags risky ones and keeps them in
+their own Notion database. It makes no LLM calls and has no niche filter (the
+series covers all developer repos).
+
+```bash
+uv run python -m content_radar scout --dry-run --limit 10   # print the top 10, write nothing
+uv run python -m content_radar scout                        # upsert into the repos database
+uv run python -m content_radar scout --sources search,trending_weekly
+```
+
+**Sources** (each fails safely; set in `config.yaml` under `scout.sources`):
+
+| Source | What it gives |
+|---|---|
+| `trending_daily`, `trending_weekly` | github.com/trending (all languages, or `scout.trending_languages`). Scraped HTML, approved for this source: there is no API, so a markup change logs a warning and that source returns nothing |
+| `ossinsight_day`, `ossinsight_week` | OSS Insight trends API: stars gained in the last 24 h / 7 days |
+| `search` | GitHub Search: repos created in the last 7 days with 100+ stars |
+
+The top `scout.enrich_top` repos get one GitHub REST lookup each for licence, dates,
+topics and fork status.
+
+**Flags** are cheap signals for the human safety checklist, not verdicts:
+`list` (awesome-lists; excluded by default via `scout.exclude_flags`), `lure-words`
+(crack, keygen, aimbot...), `low-forks` (a 300+ star repo with forks under 1% of
+stars, a star-farming sign), `no-license`, `archived`, `new-repo` (under 14 days),
+`fork`.
+
+**Momentum** (0-100) = 50 x rank of stars gained this week + 20 x rank of stars
+gained today + 30 x days trending in a row (capped at 7). One big day only fills the
+"today" part, so repos have to keep trending to rank high. Dry runs have no history,
+so every streak is 1.
+
+**Notion.** Create the database once (same parent page as the Ideas database):
+
+```bash
+uv run python scripts/create_notion_db.py --kind repos --write-env
+```
+
+Then add `NOTION_REPOS_DB_ID` as a repo secret. Unlike the Ideas sink, this one
+**updates** rows, but only the bot's columns: Repo, URL, Description, Language,
+Stars, Forks, Stars This Week, Stars Today, Momentum, Streak, Days Seen, First Seen,
+Last Seen, Sources, Flags, License, Created, Last Push. The human columns **Pick**
+(Deep / Quick / Radar / Skip), **Episode**, **Verdict** and **Notes** are never
+written, not even on create. Rows are matched by exact Repo title (owner/name).
+
+**Schedule.** `daily.yml` runs the scout as a second step after the ideas run, even
+if that step failed. Until `NOTION_REPOS_DB_ID` is set it logs `SKIPPED` and exits
+cleanly. A dry-run dispatch also dry-runs the scout and prints the top 10.
+
 ## Time zone
 
 All dates and time windows use **Africa/Lagos**. Items are stored with a
@@ -193,6 +246,7 @@ CLI (each command prompts for the value, so nothing lands in shell history):
 gh secret set ANTHROPIC_API_KEY
 gh secret set NOTION_TOKEN
 gh secret set NOTION_IDEAS_DB_ID
+gh secret set NOTION_REPOS_DB_ID   # repo scout
 # optional
 gh secret set REDDIT_CLIENT_ID
 gh secret set REDDIT_CLIENT_SECRET
@@ -205,6 +259,7 @@ gh secret set STACKEXCHANGE_KEY
 | `ANTHROPIC_API_KEY` | yes | Haiku filter and Sonnet synthesis |
 | `NOTION_TOKEN` | yes | write ideas to Notion |
 | `NOTION_IDEAS_DB_ID` | yes | the Ideas database |
+| `NOTION_REPOS_DB_ID` | for the scout | the Worth the Clone? repos database; the scout skips itself without it |
 | `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` | no | Reddit OAuth; RSS fallback without them |
 | `STACKEXCHANGE_KEY` | no | higher Stack Exchange quota |
 | `GITHUB_TOKEN` | automatic | provided by Actions; raises the Search API limit |
