@@ -58,10 +58,28 @@ jobs:
           if [ -n "${{ inputs.sources }}" ]; then ARGS="$ARGS --sources ${{ inputs.sources }}"; fi
           uv run python -m content_radar run $ARGS 2>&1 | tee run.log
 
+      # Worth the Clone? repo scout. Runs even if the ideas run failed, and its own
+      # failure doesn't hide the ideas run's result. Skips itself (and says so) when
+      # NOTION_REPOS_DB_ID isn't set yet.
+      - name: Run repo scout
+        if: always()
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_REPOS_DB_ID: ${{ secrets.NOTION_REPOS_DB_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          set -o pipefail
+          ARGS=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run --limit 10"; fi
+          uv run python -m content_radar scout $ARGS 2>&1 | tee scout.log
+
       - name: Upload run log
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: run-log-${{ github.run_id }}
-          path: run.log
+          path: |
+            run.log
+            scout.log
           retention-days: 14
