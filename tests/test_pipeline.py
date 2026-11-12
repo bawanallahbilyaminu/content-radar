@@ -52,6 +52,9 @@ def test_collect_items_respects_sources_filter(settings, transport):
 
 
 def test_cli_dry_run_prints_json(settings, transport, monkeypatch, capsys):
+    # The arXiv fixture has fixed dates, so keep it inside the lookback window
+    # whatever day the suite runs; this test is about the CLI output, not freshness.
+    settings.sources["arxiv"].model_extra["lookback_hours"] = 10**6
     monkeypatch.setattr(cli, "load_settings", lambda _p: settings)
     monkeypatch.setattr(cli, "run", lambda s, **kw: pipeline_run(s, transport=transport, **kw))
     rc = cli.main(["run", "--dry-run", "--skip-llm", "--sources", "arxiv", "--limit", "2"])
